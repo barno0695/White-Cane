@@ -2,9 +2,11 @@
 
 Clone [HieCoAttenVQA] (https://github.com/jiasenlu/HieCoAttenVQA) repository.
 
-''' bash 
+``` bash
+
 git clone https://github.com/jiasenlu/HieCoAttenVQA.git
-'''
+
+```
 
 Download these files in the respective folders:
 
