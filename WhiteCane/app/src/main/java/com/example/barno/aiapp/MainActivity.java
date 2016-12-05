@@ -1,12 +1,14 @@
 package com.example.barno.aiapp;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -31,6 +33,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Locale;
 
 
@@ -39,11 +42,13 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int CAMERA_REQUEST = 1888;
     private static final int SELECT_PICTURE = 1889;
+    private static final int REQ_CODE_SPEECH_INPUT = 1890;
     private ImageView imageView;
-    private TextView textView;
-    TextToSpeech t1;
-    EditText ed1;
-    Button b1;
+    private TextView txtSpeechInput;
+    TextToSpeech textToSpeech;
+    EditText captionText;
+    Button listenButton;
+    Button commandButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +56,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         this.imageView = (ImageView)this.findViewById(R.id.imageHolder);
         Button photoButton = (Button) this.findViewById(R.id.cameraButton);
-        Button gallleryButton = (Button) this.findViewById(R.id.galleryButton);
+        Button galleryButton = (Button) this.findViewById(R.id.galleryButton);
+        this.txtSpeechInput = (TextView) this.findViewById(R.id.txtSpeechInput);
+
         photoButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -61,29 +68,37 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        ed1=(EditText)findViewById(R.id.editText);
-        b1=(Button)findViewById(R.id.listenButton);
+        captionText=(EditText)findViewById(R.id.captionText);
+        listenButton=(Button)findViewById(R.id.listenButton);
+        commandButton=(Button)findViewById(R.id.commandButton);
 
-        t1=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+        commandButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                promptSpeechInput();
+            }
+        });
+
+        textToSpeech=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
                 if(status != TextToSpeech.ERROR) {
-                    t1.setLanguage(Locale.UK);
+                    textToSpeech.setLanguage(Locale.UK);
                 }
             }
         });
 
-        b1.setOnClickListener(new View.OnClickListener() {
+        listenButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String toSpeak = ed1.getText().toString();
+                String toSpeak = captionText.getText().toString();
                 Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
-                t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+                textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
 
             }
         });
 
-        gallleryButton.setOnClickListener(new View.OnClickListener() {
+        galleryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -116,10 +131,27 @@ public class MainActivity extends AppCompatActivity {
 
     public void speak()
     {
-        String toSpeak = ed1.getText().toString();
+        String toSpeak = captionText.getText().toString();
         Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
-        t1.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+        textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
     }
+
+    private void promptSpeechInput() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
+                "Speak");
+        try {
+            startActivityForResult(intent, REQ_CODE_SPEECH_INPUT);
+        } catch (ActivityNotFoundException a) {
+            Toast.makeText(getApplicationContext(),
+                    "Speech not supported",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
 
     private static String multipost(String urlString, MultipartEntity reqEntity) {
         try {
@@ -200,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
                          String response = multipost("http://10.109.25.35:5000/upload", reqEntity);
 
                         System.out.println("**********************************" + response);
-                        ed1.setText(response);
+                        captionText.setText(response);
                         speak();
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -246,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
                             String response = multipost("http://10.109.25.35:5000/upload", reqEntity);
 
                             System.out.println("**********************************" + response);
-                            ed1.setText(response);
+                            captionText.setText(response);
                             speak();
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -258,6 +290,51 @@ public class MainActivity extends AppCompatActivity {
                 thread.start();
                 try { thread.join(); } catch (InterruptedException e) { e.printStackTrace(); }
                 speak();
+            }
+        }
+
+        if (requestCode == REQ_CODE_SPEECH_INPUT)
+        {
+            if (resultCode == RESULT_OK && null != data) {
+
+                ArrayList<String> result = data
+                        .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+//                txtSpeechInput.setText(result.get(0));
+                String command = result.get(0);
+
+                if(command.toLowerCase().contains("speak"))
+                {
+                    speak();
+                }
+
+                else if(command.toLowerCase().contains("camera") || command.toLowerCase().contains("front") || command.toLowerCase().contains("see"))
+                {
+                    Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                    startActivityForResult(cameraIntent, CAMERA_REQUEST);
+                }
+
+                else if(command.toLowerCase().contains("gallery"))
+                {
+                    Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                    getIntent.setType("image/*");
+
+                    Intent pickIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    pickIntent.setType("image/*");
+
+                    Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
+                    chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {pickIntent});
+
+                    startActivityForResult(chooserIntent, SELECT_PICTURE);
+                }
+
+                else
+                {
+                    String toSpeak = "Speak again";
+                    Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
+                    textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+                }
+
+
             }
         }
     }
