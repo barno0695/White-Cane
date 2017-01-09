@@ -11,9 +11,51 @@
     android:id="@+id/layout"
     android:orientation="vertical">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp">
+
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="match_parent"
+            android:id="@+id/showIP"
+            android:text="IP"/>
+
+
+
+        <LinearLayout
+            android:layout_width="270dp"
+            android:layout_height="50dp"
+            android:id="@+id/ipLayout"
+            android:visibility="gone" >
+
+            <EditText
+                android:layout_width="220dp"
+                android:layout_height="match_parent"
+                android:id="@+id/ipText"
+                android:text="192.168.225.32"/>
+
+            <Button
+                android:layout_width="50dp"
+                android:layout_height="match_parent"
+                android:id="@+id/changeIP"
+                android:text="OK"/>
+
+
+
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="50dp"
+            android:layout_height="match_parent"
+            android:id="@+id/cameraPreview"/>
+
+    </LinearLayout>
+
+
     <ImageView
         android:id="@+id/imageHolder"
-        android:layout_height="350dp"
+        android:layout_height="300dp"
         android:layout_width="match_parent" />
 
     <LinearLayout
