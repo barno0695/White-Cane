@@ -28,6 +28,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -53,6 +54,7 @@ import java.util.Locale;
 
 import static android.R.attr.angle;
 import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
+import static android.view.View.GONE;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -73,12 +75,26 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout ipLayout;
     CameraPreview mPreview;
     Camera mCamera;
+    ProgressBar spinner;
+
+    /** A safe way to get an instance of the Camera object. */
+    public static Camera getCameraInstance(){
+        Camera c = null;
+        try {
+            c = Camera.open(); // attempt to get a Camera instance
+        }
+        catch (Exception e){
+            // Camera is not available (in use or does not exist)
+        }
+        return c; // returns null if camera is unavailable
+    }
+
 
     @Override
     protected void onPause() {
         super.onPause();
 //        releaseMediaRecorder();       // if you are using MediaRecorder, release it first
-        releaseCamera();              // release the camera immediately on pause event
+//        releaseCamera();              // release the camera immediately on pause event
     }
 
     private void releaseCamera(){
@@ -93,6 +109,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
 
+
+
             System.out.println(data.length);
             Bitmap photo;
             photo= BitmapFactory.decodeByteArray(data, 0, data.length);
@@ -104,6 +122,8 @@ public class MainActivity extends AppCompatActivity {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             photo.compress(Bitmap.CompressFormat.JPEG, 100, bos);
             ContentBody contentPart = new ByteArrayBody(bos.toByteArray(), filename);
+
+
 
             final MultipartEntity reqEntity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
             reqEntity.addPart("file", contentPart);
@@ -118,19 +138,22 @@ public class MainActivity extends AppCompatActivity {
 
                         System.out.println("**********************************" + response);
                         captionText.setText(response);
-                        speak();
+//                        speak();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+//                    speak();
                 }
             });
 
 
             thread.start();
             try { thread.join(); } catch (InterruptedException e) { e.printStackTrace(); }
-
+//            spinner.setVisibility(View.GONE);
             mCamera.stopPreview();
             mCamera.startPreview();
+            speak();
+//            releaseCamera();
 
 
         }
@@ -156,19 +179,33 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-//    public void capturePic()
-//    {
-////        mCamera = Camera.open();
-//        mCamera.setDisplayOrientation(90);
-//
-//        // Create our Preview view and set it as the content of our activity.
-//        mPreview = new CameraPreview(this, mCamera);
-//        FrameLayout preview = (FrameLayout) findViewById(R.id.cameraPreview);
-//        preview.addView(mPreview);
-//
-//        mCamera.takePicture(null, null, pictureCallback);
-//
+    public void capturePic(Camera mCamera)
+    {
+
+
+        // Create our Preview view and set it as the content of our activity.
+
+
+//        mCamera.startPreview();
+
+//        try {
+//            Thread.sleep(10000);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+////        int flag = 0;
+////    while (flag ==0) {
+        try {
+            mCamera.takePicture(null, null, pictureCallback);
+//            flag = 1;
+//            break;
+        } catch (Exception e) {
+            e.printStackTrace();
+//        System.out.println("yo");
+        }
 //    }
+
+    }
 
 
     @Override
@@ -184,13 +221,24 @@ public class MainActivity extends AppCompatActivity {
         this.showIP = (Button) this.findViewById(R.id.showIP);
         this.changeIP = (Button) this.findViewById(R.id.changeIP);
         this.ipLayout = (LinearLayout) this.findViewById(R.id.ipLayout);
-        this.mCamera = Camera.open();
-        this.mCamera.setDisplayOrientation(90);
+        spinner = (ProgressBar)findViewById(R.id.progressBar1);
+        mCamera = getCameraInstance();
+        mCamera.setDisplayOrientation(90);
 
-        // Create our Preview view and set it as the content of our activity.
         mPreview = new CameraPreview(this, mCamera);
         FrameLayout preview = (FrameLayout) findViewById(R.id.cameraPreview);
         preview.addView(mPreview);
+//        mPreview = new CameraPreview(this, mCamera);
+//        FrameLayout preview = (FrameLayout) findViewById(R.id.cameraPreview);
+//        preview.addView(mPreview);
+//        this.mCamera = Camera.open();
+//
+//        this.mCamera.setDisplayOrientation(90);
+//
+//        // Create our Preview view and set it as the content of our activity.
+//        this.mPreview = new CameraPreview(this, mCamera);
+//        FrameLayout preview = (FrameLayout) findViewById(R.id.cameraPreview);
+//        preview.addView(mPreview);
 
 
 
@@ -200,7 +248,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                mCamera.takePicture(null, null, pictureCallback);
+//                mCamera.takePicture(null, null, pictureCallback);
+                capturePic(mCamera);
 
             }
         });
@@ -218,7 +267,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (!ipText.getText().equals("")) {
-                    ipLayout.setVisibility(View.GONE);
+                    ipLayout.setVisibility(GONE);
                 }
             }
         });
@@ -434,8 +483,21 @@ public class MainActivity extends AppCompatActivity {
                 {
 //                    Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
 //                    startActivityForResult(cameraIntent, CAMERA_REQUEST);
+//                    if (this.mCamera == null)
+//                    {
+//                        this.mCamera = Camera.open();
+//                    }
+//                    this.mCamera.setDisplayOrientation(90);
+//
+//                    // Create our Preview view and set it as the content of our activity.
+//                    this.mPreview = new CameraPreview(this, mCamera);
+//                    FrameLayout preview = (FrameLayout) findViewById(R.id.cameraPreview);
+//                    preview.addView(mPreview);
+//                    mCamera.takePicture(null, null, pictureCallback);
+
+
+//                    capturePic(mCamera);
                     mCamera.takePicture(null, null, pictureCallback);
-//                    capturePic();
                 }
 
                 else if(command.toLowerCase().contains("gallery"))

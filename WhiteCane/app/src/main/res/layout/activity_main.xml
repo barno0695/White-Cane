@@ -33,7 +33,7 @@
                 android:layout_width="220dp"
                 android:layout_height="match_parent"
                 android:id="@+id/ipText"
-                android:text="192.168.225.32"/>
+                android:text="10.109.25.16"/>
 
             <Button
                 android:layout_width="50dp"
@@ -52,6 +52,13 @@
 
     </LinearLayout>
 
+    <ProgressBar
+        android:id="@+id/progressBar1"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true"
+        android:visibility="gone"/>
 
     <ImageView
         android:id="@+id/imageHolder"
@@ -61,14 +68,15 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:weightSum="3">
+        android:weightSum="2">
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Camera"
-            android:id="@+id/cameraButton" />
+            android:id="@+id/cameraButton"
+            android:visibility="gone" />
 
         <Button
             android:layout_width="wrap_content"
