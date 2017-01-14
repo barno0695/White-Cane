@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,8 +8,27 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.example.barno.aiapp.MainActivity"
-    android:id="@+id/layout"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:onClick="screenTapped" >
+
+    <TextView
+        android:text="Loading..."
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/progress"
+        android:textSize="50dp"
+        android:textColor="#992255"
+        android:textAlignment="center"
+        android:foregroundGravity="center"
+        android:visibility="gone"
+        android:gravity="center" />
+
+    <LinearLayout
+        android:id="@+id/layout"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -21,8 +40,6 @@
             android:id="@+id/showIP"
             android:text="IP"/>
 
-
-
         <LinearLayout
             android:layout_width="270dp"
             android:layout_height="50dp"
@@ -33,7 +50,7 @@
                 android:layout_width="220dp"
                 android:layout_height="match_parent"
                 android:id="@+id/ipText"
-                android:text="10.109.25.16"/>
+                android:text="10.109.25.55"/>
 
             <Button
                 android:layout_width="50dp"
@@ -83,6 +100,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Gallery"
+            android:visibility="gone"
             android:id="@+id/galleryButton" />
 
         <Button
@@ -90,6 +108,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Listen again"
+            android:visibility="gone"
             android:id="@+id/listenButton" />
 
     </LinearLayout>
@@ -98,19 +117,24 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        android:id="@+id/captionText"/>
+        android:id="@+id/captionText"
+        android:text="@string/welcome_note" />
 
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        android:id="@+id/txtSpeechInput"/>
+        android:id="@+id/txtSpeechInput"
+        android:text="@string/welcome_note"/>
 
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:text="Command"
+        android:visibility="gone"
         android:id="@+id/commandButton" />
+    </LinearLayout>
 
-</LinearLayout>
+
+</FrameLayout>

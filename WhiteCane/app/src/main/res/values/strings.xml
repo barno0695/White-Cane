@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">White Cane</string>
+    <string name="welcome_note">Namaste. bla bla bla. Help chahiye? </string>
+    <string name="speak_now">Abhi bolo.</string>
+    <string name="help_text">Ye le help</string>
 </resources>
