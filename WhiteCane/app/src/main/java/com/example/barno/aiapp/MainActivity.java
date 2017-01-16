@@ -19,25 +19,33 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.entity.mime.content.ContentBody;
 import org.apache.http.entity.mime.content.StringBody;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -50,11 +58,16 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Queue;
+import java.util.Scanner;
 
 import static android.R.attr.angle;
 import static android.R.attr.progress;
@@ -62,7 +75,8 @@ import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
 import static android.view.View.GONE;
 
 
-public class MainActivity extends AppCompatActivity  {
+public class MainActivity extends Activity implements GestureDetector.OnGestureListener,
+        GestureDetector.OnDoubleTapListener {
 
     private static final int CAMERA_REQUEST = 1888;
     private static final int SELECT_PICTURE = 1889;
@@ -72,17 +86,28 @@ public class MainActivity extends AppCompatActivity  {
     private TextView txtSpeechInput;
     TextToSpeech textToSpeech;
     EditText captionText;
-    Button listenButton;
-    Button commandButton;
     EditText ipText;
-    Button showIP;
-    Button changeIP;
-    LinearLayout ipLayout;
+    ImageButton showIP;
+    TextView changeIP;
+    RelativeLayout ipLayout;
     CameraPreview mPreview;
     Camera mCamera;
     boolean paused = true;
     TextView spinner;
     String query;
+    String type;
+    Boolean objectFound;
+    private GestureDetectorCompat mDetector;
+    Boolean detectGesture;
+    ImageButton captionButton;
+    ImageButton qaButton;
+    ImageButton facesButton;
+    ImageButton findButton;
+    ImageButton helpButton;
+    ImageButton showRating;
+    RelativeLayout ratingLayout;
+    TextView giveRating;
+
 
     /** A safe way to get an instance of the Camera object. */
     public static Camera getCameraInstance(){
@@ -123,6 +148,7 @@ public class MainActivity extends AppCompatActivity  {
             Matrix matrix = new Matrix();
             matrix.postRotate(90);
             photo = Bitmap.createBitmap(photo, 0, 0, photo.getWidth(), photo.getHeight(), matrix, true);
+            photo = Bitmap.createScaledBitmap(photo, 512, 512, false);
             imageView.setImageBitmap(photo);
             String filename = "filename.png";
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -147,19 +173,21 @@ public class MainActivity extends AppCompatActivity  {
                 @Override
                 public void run() {
                     String response = "No response";
-                    try  {
+//                    try  {
                         try {
-                            response = multipost("http://" + ipText.getText() + ":5000/upload", reqEntity);
+                            System.out.println("http://" + ipText.getText() + ":5000/");
+                            response = multipost("http://" + ipText.getText() + ":5000/" + type, reqEntity);
+                            System.out.println("**********************************" + response);
+                            captionText.setText(response);
                         } catch (Exception e) {
                             e.printStackTrace();
-                            captionText.setText("There was a network error");
+                            response = "There was a network error";
                          }
 
-                        System.out.println("**********************************" + response);
-                        captionText.setText(response);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                    }
                 }
             });
             thread.start();
@@ -169,6 +197,13 @@ public class MainActivity extends AppCompatActivity  {
             spinner.setVisibility(View.GONE);
             mCamera.startPreview();
             speak();
+
+            if (type == "find" && objectFound == false) {
+//                HashMap<String, String> params = new HashMap<String, String>();
+//                params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,"isFind");
+                textToSpeech.speak("Swipe right to continue searching and left to stop", TextToSpeech.QUEUE_ADD, null);
+                detectGesture = true;
+            }
 
         }
     };
@@ -193,17 +228,6 @@ public class MainActivity extends AppCompatActivity  {
         }
     }
 
-    public void capturePic(Camera mCamera)
-    {
-
-        try {
-            mCamera.takePicture(null, null, pictureCallback);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -211,36 +235,50 @@ public class MainActivity extends AppCompatActivity  {
         checkPermisions();
         setContentView(R.layout.activity_main);
         this.imageView = (ImageView)this.findViewById(R.id.imageHolder);
-        Button photoButton = (Button) this.findViewById(R.id.cameraButton);
-        Button galleryButton = (Button) this.findViewById(R.id.galleryButton);
         this.txtSpeechInput = (TextView) this.findViewById(R.id.txtSpeechInput);
         this.ipText = (EditText) this.findViewById(R.id.ipText);
-        this.showIP = (Button) this.findViewById(R.id.showIP);
-        this.changeIP = (Button) this.findViewById(R.id.changeIP);
-        this.ipLayout = (LinearLayout) this.findViewById(R.id.ipLayout);
+        this.showIP = (ImageButton) this.findViewById(R.id.showIP);
+        this.changeIP = (TextView) this.findViewById(R.id.changeIP);
+        this.ipLayout = (RelativeLayout) this.findViewById(R.id.ipLayout);
+        this.captionButton = (ImageButton) this.findViewById(R.id.captionButton);
+        this.qaButton = (ImageButton) this.findViewById(R.id.qaButton);
+        this.helpButton = (ImageButton) this.findViewById(R.id.helpButton);
+        this.facesButton = (ImageButton) this.findViewById(R.id.facesButton);
+        this.findButton = (ImageButton) this.findViewById(R.id.findButton);
         mCamera = getCameraInstance();
         mCamera.setDisplayOrientation(90);
         spinner = (TextView) findViewById(R.id.progress);
         query = "";
+        type = "";
+        objectFound = false;
+        detectGesture = false;
+        mDetector = new GestureDetectorCompat(this,this);
+        giveRating = (TextView) findViewById(R.id.giveRating);
+        showRating = (ImageButton) findViewById(R.id.showRating);
+        ratingLayout = (RelativeLayout) findViewById(R.id.ratingsLayout);
+
+        // Set the gesture detector as the double tap
+        // listener.
+        mDetector.setOnDoubleTapListener(this);
+
 
         mPreview = new CameraPreview(this, mCamera);
         FrameLayout preview = (FrameLayout) findViewById(R.id.cameraPreview);
         preview.addView(mPreview);
-
-        photoButton.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                capturePic(mCamera);
-
-            }
-        });
 
         showIP.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 ipLayout.setVisibility(View.VISIBLE);
+            }
+        });
+
+        showRating.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                ratingLayout.setVisibility(View.VISIBLE);
             }
         });
 
@@ -254,16 +292,88 @@ public class MainActivity extends AppCompatActivity  {
             }
         });
 
-        captionText=(EditText)findViewById(R.id.captionText);
-        listenButton=(Button)findViewById(R.id.listenButton);
-        commandButton=(Button)findViewById(R.id.commandButton);
+        giveRating.setOnClickListener(new View.OnClickListener() {
 
-        commandButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                promptSpeechInput();
+                if (!ipText.getText().equals("")) {
+                    ratingLayout.setVisibility(GONE);
+                }
             }
         });
+
+        captionButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                type = "caption";
+                spinner.setVisibility(View.VISIBLE);
+                mCamera.takePicture(null,null,pictureCallback);
+            }
+        });
+
+        facesButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                type = "face";
+                spinner.setVisibility(View.VISIBLE);
+                mCamera.takePicture(null,null,pictureCallback);
+            }
+        });
+
+        findButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                type = "find";
+                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+                intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
+                        "Speak");
+                try {
+                    startActivityForResult(intent, 9232);
+                } catch (ActivityNotFoundException a) {
+                    Toast.makeText(getApplicationContext(),
+                            "Speech not supported",
+                            Toast.LENGTH_SHORT).show();
+                }
+//                mCamera.takePicture(null,null,pictureCallback);
+            }
+        });
+
+        qaButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                type = "qa";
+                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+                intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
+                        "Speak");
+                try {
+                    startActivityForResult(intent, 9232);
+                } catch (ActivityNotFoundException a) {
+                    Toast.makeText(getApplicationContext(),
+                            "Speech not supported",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        helpButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                textToSpeech.speak(getString(R.string.help_text), TextToSpeech.QUEUE_FLUSH, null);
+            }
+        });
+
+        captionText=(EditText)findViewById(R.id.captionText);
 
         textToSpeech=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
@@ -272,28 +382,17 @@ public class MainActivity extends AppCompatActivity  {
                 textToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                     @Override
                     public void onDone(String utteranceId) {
-                         Log.d("MainActivity", "TTS finished");
-                        System.out.println(utteranceId);
-                        if (utteranceId.equals("initial")) {
-                            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-                            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-                            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-                            intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
-                                    "Speak");
-                            try {
-                                startActivityForResult(intent, 9564);
-                            } catch (ActivityNotFoundException a) {
-                                Toast.makeText(getApplicationContext(),
-                                        "Speech not supported",
-                                        Toast.LENGTH_SHORT).show();
-                            }
-                        }
 
                     }
 
                     @Override
+                    public void onError(String utteranceId, int error) {
+//                        System.out.println(error);
+                    }
+
+                    @Override
                     public void onError(String utteranceId) {
+//                        System.out.println("error");
                     }
 
                     @Override
@@ -305,54 +404,89 @@ public class MainActivity extends AppCompatActivity  {
                 if(status != TextToSpeech.ERROR) {
                     textToSpeech.setLanguage(Locale.UK);
                 }
-                String toSpeak = captionText.getText().toString();
-                Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
-                HashMap<String, String> map = new HashMap<String, String>();
-                map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "initial");
-                textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, map);
 
-
-//                try {
-//                    Thread.sleep(3000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-
-
+                speak();
 
             }
 
 
-        });
-
-        listenButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String toSpeak = captionText.getText().toString();
-                Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
-                textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
-
-            }
-        });
-
-        galleryButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
-                getIntent.setType("image/*");
-
-                Intent pickIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                pickIntent.setType("image/*");
-
-                Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
-                chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {pickIntent});
-
-                startActivityForResult(chooserIntent, SELECT_PICTURE);
-
-            }
         });
 
     }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event){
+        this.mDetector.onTouchEvent(event);
+        // Be sure to call the superclass implementation
+        return super.onTouchEvent(event);
+    }
+
+    @Override
+    public boolean onDown(MotionEvent event) {
+//        Log.d("touch event","onDown: " + event.toString());
+        return true;
+    }
+
+    @Override
+    public boolean onFling(MotionEvent event1, MotionEvent event2,
+                           float velocityX, float velocityY) {
+//        Log.d("touch event", "onFling: " + event1.toString()+event2.toString());
+        return true;
+    }
+
+    @Override
+    public void onLongPress(MotionEvent event) {
+//        Log.d("touch event", "onLongPress: " + event.toString());
+        promptSpeechInput();
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
+                            float distanceY) {
+//        Log.d("touch event", "onScroll: " + e1.toString()+e2.toString());
+        if (type == "find" && detectGesture == true) {
+            if (e1.getAxisValue(0) - e2.getAxisValue(0) > 50) {
+                type = "";
+            }
+            else if (e2.getAxisValue(0) - e1.getAxisValue(0) > 50) {
+                detectGesture = false;
+                spinner.setVisibility(View.VISIBLE);
+                mCamera.takePicture(null, null, pictureCallback);
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public void onShowPress(MotionEvent event) {
+//        Log.d("touch event", "onShowPress: " + event.toString());
+    }
+
+    @Override
+    public boolean onSingleTapUp(MotionEvent event) {
+//        Log.d("touch event", "onSingleTapUp: " + event.toString());
+        promptSpeechInput();
+        return true;
+    }
+
+    @Override
+    public boolean onDoubleTap(MotionEvent event) {
+//        Log.d("touch event", "onDoubleTap: " + event.toString());
+        return true;
+    }
+
+    @Override
+    public boolean onDoubleTapEvent(MotionEvent event) {
+//        Log.d("touch event", "onDoubleTapEvent: " + event.toString());
+        return true;
+    }
+
+    @Override
+    public boolean onSingleTapConfirmed(MotionEvent event) {
+//        Log.d("touch event", "onSingleTapConfirmed: " + event.toString());
+        return true;
+    }
+
 
     /* Get the real path from the URI */
     public String getPathFromURI(Uri contentUri) {
@@ -418,7 +552,6 @@ public class MainActivity extends AppCompatActivity  {
 
 
         } catch (Exception e) {
-            System.out.println("&&&&&&&&&&&&&&& " + "multipart post error " + e + "(" + urlString + ")");
             Log.e("ERRRRRR", "multipart post error " + e + "(" + urlString + ")");
         }
         return null;
@@ -447,95 +580,72 @@ public class MainActivity extends AppCompatActivity  {
         return builder.toString();
     }
 
+    public String getLuisIntent(String command)
+    {
+        String question = "";
+        final String[] ret = {""};
+        final String[] ent = {""};
+        String[] words = command.split(" ");
+        for(int i=0; i<words.length; i++)
+        {
+            question = question + words[i] + "%20";
+        }
+        final String url = "https://api.projectoxford.ai/luis/v2.0/apps/3d75516a-6c52-42bf-9cfe-365dfa43a4f9?subscription-key=f5034dc355b947078fac579d31068189&q=" + question;
+
+        Thread thread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    URLConnection connection = null;
+                    connection = new URL(url).openConnection();
+                    connection.setRequestProperty("Accept-Charset", "UTF-8");
+                    InputStream response = connection.getInputStream();
+                    java.util.Scanner s = new java.util.Scanner(response).useDelimiter("\\A");
+                    String resp = s.hasNext() ? s.next() : "";
+                    System.out.println(resp);
+                    try {
+                        JSONObject json = new JSONObject(resp);
+                        JSONObject topIntent = json.getJSONObject("topScoringIntent");
+                        ret[0] = topIntent.getString("intent");
+                        if (ret[0].equals("find")) {
+                            ent[0] = json.getJSONArray("entities").getJSONObject(0).getString("entity");
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        thread.start();
+        try { thread.join(); } catch (InterruptedException e) { e.printStackTrace(); }
+
+        if(ret[0].equals("find")) {
+            query = ent[0];
+        }
+
+        System.out.println(ret[0] + " " + ent[0]);
+
+        return ret[0];
+    }
+
     Bitmap photo;
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        if (requestCode == SELECT_PICTURE  && resultCode == Activity.RESULT_OK) {
-            // Get the url from data
-            Uri selectedImageUri = data.getData();
-            if (null != selectedImageUri) {
-                // Get the path from the Uri
-                String path = getPathFromURI(selectedImageUri);
-                Log.i("Path", "Image Path : " + path);
-                // Set the image in ImageView
-//                imageView.setImageURI(selectedImageUri);
-                try {
-                    photo = MediaStore.Images.Media.getBitmap(this.getContentResolver(),selectedImageUri);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-//                photo = (Bitmap) data.getExtras().get("data");
-                imageView.setImageBitmap(photo);
-                String filename = "filename.png";
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                photo.compress(Bitmap.CompressFormat.JPEG, 100, bos);
-                ContentBody contentPart = new ByteArrayBody(bos.toByteArray(), filename);
-
-                final MultipartEntity reqEntity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-                reqEntity.addPart("file", contentPart);
-
-                Thread thread = new Thread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        try  {
-
-                            String response = multipost("http://" + ipText.getText() + ":5000/upload", reqEntity);
-
-                            System.out.println("**********************************" + response);
-                            captionText.setText(response);
-                            speak();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-
-
-                thread.start();
-                try { thread.join(); } catch (InterruptedException e) { e.printStackTrace(); }
-                speak();
-            }
-        }
-
-        if (requestCode == 9564)
-        {
+        if (requestCode == 9232) {
             if (resultCode == RESULT_OK && null != data) {
-
 
                 ArrayList<String> result = data
                         .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                 String command = result.get(0);
-                System.out.println(command);
+                query = command;
+                spinner.setVisibility(View.VISIBLE);
+                mCamera.takePicture(null, null, pictureCallback);
 
-                if(command.toLowerCase().contains("yes")) {
-                    textToSpeech.speak(getString(R.string.help_text), TextToSpeech.QUEUE_FLUSH, null);
-//                    textToSpeech.speak("Tap anywhere to speak", TextToSpeech.QUEUE_FLUSH, null);
-                }
-                else if(command.toLowerCase().contains("no")) {
-                    textToSpeech.speak("Tap anywhere to speak", TextToSpeech.QUEUE_FLUSH, null);
-                }
-                else {
-                    textToSpeech.speak("Speak again", TextToSpeech.QUEUE_FLUSH, null);
-                    speak();
-                    Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                            RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-                    intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
-                            "Speak");
-                    try {
-                        startActivityForResult(intent, 9564);
-                    } catch (ActivityNotFoundException a) {
-                        Toast.makeText(getApplicationContext(),
-                                "Speech not supported",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-                }
-
+            }
         }
 
         if (requestCode == REQ_CODE_SPEECH_INPUT)
@@ -545,48 +655,53 @@ public class MainActivity extends AppCompatActivity  {
                 ArrayList<String> result = data
                         .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                 String command = result.get(0);
+                query = command;
 
-                if(command.toLowerCase().contains("speak"))
+                if(command.toLowerCase().contains("speak again"))
                 {
                     speak();
                 }
 
-//                else if(command.toLowerCase().contains("camera") || command.toLowerCase().contains("front") || command.toLowerCase().contains("see"))
-//                {
-//                    spinner.setVisibility(View.VISIBLE);
-//                    mCamera.takePicture(null, null, pictureCallback);
-//                }
+                else {
 
-                else if(command.toLowerCase().contains("gallery"))
-                {
-                    Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
-                    getIntent.setType("image/*");
+                    String luisIntent = getLuisIntent(command);
 
-                    Intent pickIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                    pickIntent.setType("image/*");
+                    if (luisIntent.equals("help")) {
+                        textToSpeech.speak(getString(R.string.help_text), TextToSpeech.QUEUE_FLUSH, null);
+                    }
+                    else if (luisIntent.equals("caption")) {
+                        type = "caption";
+                        spinner.setVisibility(View.VISIBLE);
+                        mCamera.takePicture(null, null, pictureCallback);
 
-                    Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
-                    chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {pickIntent});
+                    }
+                    else if (luisIntent.equals("qa")) {
+                        type = "qa";
+                        spinner.setVisibility(View.VISIBLE);
+                        mCamera.takePicture(null, null, pictureCallback);
 
-                    startActivityForResult(chooserIntent, SELECT_PICTURE);
-                }
-
-                else
-                {
-                    query = command;
-                    spinner.setVisibility(View.VISIBLE);
-                    mCamera.takePicture(null, null, pictureCallback);
-//                    String toSpeak = "Speak again";
-//                    Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
-//                    textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
-//                    speak();
+                    }
+                    else if (luisIntent.equals("face")) {
+                        type = "face";
+                        spinner.setVisibility(View.VISIBLE);
+                        mCamera.takePicture(null, null, pictureCallback);
+                    }
+                    else if (luisIntent.equals("find")) {
+                        type = "find";
+                        objectFound = false;
+                        spinner.setVisibility(View.VISIBLE);
+                        mCamera.takePicture(null, null, pictureCallback);
+//                        HashMap<String, String> params = new HashMap<String, String>();
+//                        params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,"isFind");
+//                        textToSpeech.speak("Swipe right to continue searching and left to stop", TextToSpeech.QUEUE_ADD, params);
+                        detectGesture = true;
+                    }
                 }
 
 
             }
         }
     }
-
 
 }
 

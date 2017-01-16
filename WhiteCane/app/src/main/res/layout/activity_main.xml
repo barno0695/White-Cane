@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -9,67 +10,183 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.example.barno.aiapp.MainActivity"
     android:orientation="vertical"
-    android:onClick="screenTapped" >
+    android:gravity="center">
+
+    <ImageButton
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentRight="true"
+        android:elevation="5dp"
+        android:id="@+id/showIP"
+        android:src="@android:drawable/ic_menu_preferences"
+        android:contentDescription="Show I P" />
+
+    <ImageButton
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentLeft="true"
+        android:elevation="5dp"
+        android:id="@+id/showRating"
+        android:src="@android:drawable/btn_star"
+        android:contentDescription="Ratings"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:elevation="5dp"
+        android:layout_centerHorizontal="true">
+
+    <ImageButton
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:elevation="5dp"
+        android:id="@+id/captionButton"
+        android:src="@android:drawable/ic_menu_camera"
+        android:contentDescription="Get Scene Description"/>
+
+    <ImageButton
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:elevation="5dp"
+        android:id="@+id/qaButton"
+        android:src="@android:drawable/ic_menu_set_as"
+        android:contentDescription="Question Answering"/>
+
+    <ImageButton
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:elevation="5dp"
+        android:id="@+id/facesButton"
+        android:src="@android:drawable/ic_menu_myplaces"
+        android:contentDescription="Facial Recognition"/>
+
+    <ImageButton
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:elevation="5dp"
+        android:id="@+id/findButton"
+        android:src="@android:drawable/ic_menu_search"
+        android:contentDescription="Help me Find"/>
+
+    <ImageButton
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:elevation="5dp"
+        android:id="@+id/helpButton"
+        android:src="@android:drawable/ic_menu_help"
+        android:contentDescription="Help" />
+
+    </LinearLayout>
 
     <TextView
         android:text="Loading..."
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="220dp"
+        android:layout_height="70dp"
         android:id="@+id/progress"
-        android:textSize="50dp"
-        android:textColor="#992255"
-        android:textAlignment="center"
-        android:foregroundGravity="center"
-        android:visibility="gone"
-        android:gravity="center" />
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:elevation="5dp"
+        android:textSize="40dp"
+        android:background="#F3F3F3"
+        android:textColor="#000000"
+        android:textAlignment="gravity"
+        android:gravity="center"
+        android:visibility="gone"/>
+
+    <RelativeLayout
+        android:layout_width="300dp"
+        android:layout_height="115dp"
+        android:elevation="5dp"
+        android:background="#F3F3F3"
+        android:id="@+id/ratingsLayout"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:visibility="gone">
+
+        <RatingBar
+        android:layout_width="wrap_content"
+        android:layout_height="60dp"
+        android:id="@+id/ratingBar"
+        android:elevation="5dp" />
+
+        <TextView
+            android:layout_width="100dp"
+            android:layout_height="50dp"
+            android:background="@android:color/holo_green_dark"
+            android:id="@+id/giveRating"
+            android:layout_below="@id/ratingBar"
+            android:layout_centerHorizontal="true"
+            android:text="Rate"
+            android:textColor="#F3F3F3"
+            android:textSize="30dp"
+            android:gravity="center"
+            android:src="@android:drawable/ic_menu_edit" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="300dp"
+        android:layout_height="150dp"
+        android:elevation="5dp"
+        android:background="#F3F3F3"
+        android:id="@+id/ipLayout"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="Set Server IP"
+            android:textAlignment="gravity"
+            android:textSize="30dp"
+            android:gravity="center"
+            android:textColor="#000000"
+            android:textStyle="bold"
+            android:id="@+id/setIPText"/>
+
+        <EditText
+            android:layout_width="270dp"
+            android:layout_height="50dp"
+            android:layout_below="@+id/setIPText"
+            android:background="#FFFFFF"
+            android:id="@+id/ipText"
+            android:layout_centerHorizontal="true"
+            android:text="10.109.25.55"
+            android:gravity="center"
+            android:textSize="20dp" />
+
+        <TextView
+            android:layout_width="100dp"
+            android:layout_height="50dp"
+            android:background="@android:color/holo_green_dark"
+            android:id="@+id/changeIP"
+            android:layout_below="@id/ipText"
+            android:layout_centerHorizontal="true"
+            android:text="Save"
+            android:textColor="#FFFFFF"
+            android:textSize="30dp"
+            android:gravity="center"
+            android:src="@android:drawable/ic_menu_edit" />
+
+    </RelativeLayout>
 
     <LinearLayout
         android:id="@+id/layout"
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="50dp">
-
-        <Button
-            android:layout_width="50dp"
-            android:layout_height="match_parent"
-            android:id="@+id/showIP"
-            android:text="IP"/>
-
-        <LinearLayout
-            android:layout_width="270dp"
-            android:layout_height="50dp"
-            android:id="@+id/ipLayout"
-            android:visibility="gone" >
-
-            <EditText
-                android:layout_width="220dp"
-                android:layout_height="match_parent"
-                android:id="@+id/ipText"
-                android:text="10.109.25.55"/>
-
-            <Button
-                android:layout_width="50dp"
-                android:layout_height="match_parent"
-                android:id="@+id/changeIP"
-                android:text="OK"/>
-
-
-
-        </LinearLayout>
+        android:layout_height="match_parent"
+        android:padding="0dp"
+        android:paddingBottom="0dp">
 
         <FrameLayout
-            android:layout_width="50dp"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/cameraPreview"/>
 
-    </LinearLayout>
 
-    <ProgressBar
+        <ProgressBar
         android:id="@+id/progressBar1"
         style="?android:attr/progressBarStyleLarge"
         android:layout_width="match_parent"
@@ -137,4 +254,4 @@
     </LinearLayout>
 
 
-</FrameLayout>
+</RelativeLayout>
