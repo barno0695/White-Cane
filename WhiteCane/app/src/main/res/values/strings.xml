@@ -1,3 +1,6 @@
 <resources>
-    <string name="app_name">White Cane</string>
+    <string name="app_name"> White Cane </string>
+    <string name="welcome_note"> Welcome. Tap anywhere to speak. </string>
+    <string name="speak_now"> Speak </string>
+    <string name="help_text"> Welcome to White Cane. This application supports Scene description, Visual Question Answering, Facial Recognition and Object localisation. </string>
 </resources>
