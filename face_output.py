@@ -45,7 +45,7 @@ out_str = ""
 
 if number == 0:
 	out_str += "There is no faces in your field of view, Please try to retake the picture ."
-elif number = 1:
+elif number == 1:
 	out_str += "There is a person in the image ."
 else:
 	out_str += "There are " + p.number_to_words(number) + " people in the image ."

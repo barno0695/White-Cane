@@ -322,6 +322,8 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             }
         });
 
+
+
         findButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -608,7 +610,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                         JSONObject json = new JSONObject(resp);
                         JSONObject topIntent = json.getJSONObject("topScoringIntent");
                         ret[0] = topIntent.getString("intent");
-                        if (ret[0].equals("find")) {
+                        if (ret[0].equals("find") || ret[0].equals("navigation")) {
                             ent[0] = json.getJSONArray("entities").getJSONObject(0).getString("entity");
                         }
                     } catch (JSONException e) {
@@ -622,9 +624,10 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         thread.start();
         try { thread.join(); } catch (InterruptedException e) { e.printStackTrace(); }
 
-        if(ret[0].equals("find")) {
+        if(ret[0].equals("find") || ret[0].equals("navigation")) {
             query = ent[0];
         }
+
 
         System.out.println(ret[0] + " " + ent[0]);
 
@@ -695,6 +698,19 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
 //                        params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,"isFind");
 //                        textToSpeech.speak("Swipe right to continue searching and left to stop", TextToSpeech.QUEUE_ADD, params);
                         detectGesture = true;
+                    }
+                    else if (luisIntent.equals("navigation")) {
+                        textToSpeech.speak("Navigation to " + query + " is starting. Please minimize the navigation app and reopen WhiteCane.", TextToSpeech.QUEUE_ADD, null);
+                        String location = "";
+                        String[] words = query.split(" ");
+                        for(int i=0; i<words.length; i++)
+                        {
+                            location = location + words[i] + "+";
+                        }
+                        Uri gmmIntentUri = Uri.parse("google.navigation:q=" + location);
+                        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                        mapIntent.setPackage("com.google.android.apps.maps");
+                        startActivity(mapIntent);
                     }
                 }
 
