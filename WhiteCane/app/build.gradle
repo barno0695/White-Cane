@@ -1,15 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 24
+    compileSdkVersion 23
     buildToolsVersion "24.0.1"
 
     defaultConfig {
         applicationId "com.example.barno.whitecane"
         minSdkVersion 15
-        targetSdkVersion 24
+        targetSdkVersion 23
         versionCode 1
-        versionName "3.0"
+        versionName "3.1"
         multiDexEnabled true
     }
     buildTypes {
@@ -28,6 +28,12 @@ android {
         exclude 'META-INF/notice.txt'
         exclude 'META-INF/ASL2.0'
     }
+    useLibrary 'org.apache.http.legacy'
+
+//    configurations {
+//        all*.exclude group: 'com.android.support', module: 'support-v4'
+//        all*.exclude group: 'com.android.support', module: 'support-annotations'
+//    }
 }
 
 
@@ -35,14 +41,17 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:24.1.1'
+    compile 'com.android.support:appcompat-v7:23.0.1'
+//    compile 'com.android.support:support-v4:23.0.1'
     compile 'com.he5ed.lib:volley:android-cts-5.1_r4'
 //    compile 'com.mcxiaoke.volley:library:1.0.19'
-    compile 'org.apache.httpcomponents:httpcore:4.4.1'
-    compile 'org.apache.httpcomponents:httpclient:4.5'
-    compile('org.apache.httpcomponents:httpmime:4.3') {
-        exclude module: "httpclient"
+//    compile 'org.apache.httpcomponents:httpcore:4.4.1'
+//    compile 'org.apache.httpcomponents:httpclient:4.5'
+//    compile 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
+    compile('org.apache.httpcomponents:httpmime:4.3.6') {
+        exclude module: 'httpclient'
     }
+    compile 'org.apache.httpcomponents:httpclient-android:4.3.5'
 //    compile('org.apache.httpcomponents:httpmime:4.3') {
 //        exclude module: "httpclient"
 //    }

@@ -13,75 +13,49 @@ import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
-import android.view.SurfaceView;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.apache.http.HttpResponse;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.entity.mime.content.ContentBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Queue;
-import java.util.Scanner;
-
-import static android.R.attr.angle;
-import static android.R.attr.progress;
-import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
-import static android.view.View.GONE;
-
 
 public class MainActivity extends Activity implements GestureDetector.OnGestureListener,
         GestureDetector.OnDoubleTapListener {
 
-    private static final int CAMERA_REQUEST = 1888;
-    private static final int SELECT_PICTURE = 1889;
     private static final int REQ_CODE_SPEECH_INPUT = 1890;
-    private static final int MY_PERMISSIONS_REQUEST_CAMERA = 1891;
+    private static final int REQ_CODE_SPEECH_INPUT_AFTER_BUTTON = 1900;
     private ImageView imageView;
     private TextView txtSpeechInput;
     TextToSpeech textToSpeech;
@@ -92,7 +66,6 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     RelativeLayout ipLayout;
     CameraPreview mPreview;
     Camera mCamera;
-    boolean paused = true;
     TextView spinner;
     String query;
     String type;
@@ -140,9 +113,6 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
 
-
-
-            System.out.println(data.length);
             Bitmap photo;
             photo= BitmapFactory.decodeByteArray(data, 0, data.length);
             Matrix matrix = new Matrix();
@@ -150,48 +120,64 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             photo = Bitmap.createBitmap(photo, 0, 0, photo.getWidth(), photo.getHeight(), matrix, true);
             photo = Bitmap.createScaledBitmap(photo, 512, 512, false);
             imageView.setImageBitmap(photo);
-            String filename = "filename.png";
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             photo.compress(Bitmap.CompressFormat.JPEG, 100, bos);
-            ContentBody contentPart = new ByteArrayBody(bos.toByteArray(), filename);
-//            String txt = "aaaa";
-            ContentBody textPart = null;
-            try {
-                textPart = new StringBody(query);
-            } catch (UnsupportedEncodingException e) {
-                System.out.println("errrrr 1");
-                e.printStackTrace();
-            }
 
+            if(type.equals("qa")) {
+                String filename = "filename.png";
+                ContentBody contentPart = new ByteArrayBody(bos.toByteArray(), filename);
+                ContentBody textPart = null;
+                try {
+                    textPart = new StringBody(query);
+                } catch (UnsupportedEncodingException e) {
+                    Log.e("qa","text part of query");
+                    e.printStackTrace();
+                }
 
-            final MultipartEntity reqEntity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-            reqEntity.addPart("file", contentPart);
-            reqEntity.addPart("text", textPart);
+                final MultipartEntity reqEntity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
+                reqEntity.addPart("file", contentPart);
+                reqEntity.addPart("text", textPart);
 
-            Thread thread = new Thread(new Runnable() {
+                Thread thread = new Thread(new Runnable() {
 
-                @Override
-                public void run() {
-                    String response = "No response";
-//                    try  {
+                    @Override
+                    public void run() {
+                        String response = "No response";
                         try {
-                            System.out.println("http://" + ipText.getText() + ":5000/");
+                            Log.i("qa", "url = http://" + ipText.getText() + ":5000/" + type);
                             response = multipost("http://" + ipText.getText() + ":5000/" + type, reqEntity);
                             System.out.println("**********************************" + response);
                             captionText.setText(response);
                         } catch (Exception e) {
+                            Log.e("qa","post request");
                             e.printStackTrace();
                             response = "There was a network error";
-                         }
-
-
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
+                            captionText.setText(response);
+                        }
+                    }
+                });
+                thread.start();
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-            });
-            thread.start();
-            try { thread.join(); } catch (InterruptedException e) { e.printStackTrace(); }
+            }
+            else {
+                MicrosoftAPI msApi = new MicrosoftAPI();
+
+                if(type.equals("find")) {
+                    msApi.setEntity(query);
+                    System.out.println("finding " + query);
+                }
+                try {
+                    msApi.getVisionOutput(bos.toByteArray(),type);
+                } catch (JSONException e) {
+                    Log.e("ms api", "get vision output");
+                    e.printStackTrace();
+                }
+                captionText.setText(msApi.getStringResponse());
+            }
 
             mCamera.stopPreview();
             spinner.setVisibility(View.GONE);
@@ -257,6 +243,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         showRating = (ImageButton) findViewById(R.id.showRating);
         ratingLayout = (RelativeLayout) findViewById(R.id.ratingsLayout);
 
+
         // Set the gesture detector as the double tap
         // listener.
         mDetector.setOnDoubleTapListener(this);
@@ -287,7 +274,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             @Override
             public void onClick(View v) {
                 if (!ipText.getText().equals("")) {
-                    ipLayout.setVisibility(GONE);
+                    ipLayout.setVisibility(View.GONE);
                 }
             }
         });
@@ -297,7 +284,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             @Override
             public void onClick(View v) {
                 if (!ipText.getText().equals("")) {
-                    ratingLayout.setVisibility(GONE);
+                    ratingLayout.setVisibility(View.GONE);
                 }
             }
         });
@@ -336,7 +323,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                 intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
                         "Speak");
                 try {
-                    startActivityForResult(intent, 9232);
+                    startActivityForResult(intent, REQ_CODE_SPEECH_INPUT_AFTER_BUTTON);
                 } catch (ActivityNotFoundException a) {
                     Toast.makeText(getApplicationContext(),
                             "Speech not supported",
@@ -358,7 +345,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                 intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
                         "Speak");
                 try {
-                    startActivityForResult(intent, 9232);
+                    startActivityForResult(intent, REQ_CODE_SPEECH_INPUT_AFTER_BUTTON);
                 } catch (ActivityNotFoundException a) {
                     Toast.makeText(getApplicationContext(),
                             "Speech not supported",
@@ -552,9 +539,9 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                 return readStream(conn.getInputStream());
             }
 
-
         } catch (Exception e) {
             Log.e("ERRRRRR", "multipart post error " + e + "(" + urlString + ")");
+            e.printStackTrace();
         }
         return null;
     }
@@ -584,65 +571,24 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
 
     public String getLuisIntent(String command)
     {
-        String question = "";
-        final String[] ret = {""};
-        final String[] ent = {""};
-        String[] words = command.split(" ");
-        for(int i=0; i<words.length; i++)
+        MicrosoftAPI msAPi = new MicrosoftAPI();
+        msAPi.runLuis(command);
+        if (msAPi.getEntities()[0] != null)
         {
-            question = question + words[i] + "%20";
-        }
-        final String url = "https://api.projectoxford.ai/luis/v2.0/apps/3d75516a-6c52-42bf-9cfe-365dfa43a4f9?subscription-key=f5034dc355b947078fac579d31068189&q=" + question;
-
-        Thread thread = new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-                try {
-                    URLConnection connection = null;
-                    connection = new URL(url).openConnection();
-                    connection.setRequestProperty("Accept-Charset", "UTF-8");
-                    InputStream response = connection.getInputStream();
-                    java.util.Scanner s = new java.util.Scanner(response).useDelimiter("\\A");
-                    String resp = s.hasNext() ? s.next() : "";
-                    System.out.println(resp);
-                    try {
-                        JSONObject json = new JSONObject(resp);
-                        JSONObject topIntent = json.getJSONObject("topScoringIntent");
-                        ret[0] = topIntent.getString("intent");
-                        if (ret[0].equals("find") || ret[0].equals("navigation")) {
-                            ent[0] = json.getJSONArray("entities").getJSONObject(0).getString("entity");
-                        }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        thread.start();
-        try { thread.join(); } catch (InterruptedException e) { e.printStackTrace(); }
-
-        if(ret[0].equals("find") || ret[0].equals("navigation")) {
-            query = ent[0];
+            query = msAPi.getEntities()[0];
         }
 
-
-        System.out.println(ret[0] + " " + ent[0]);
-
-        return ret[0];
+        return msAPi.getStringResponse();
     }
 
     Bitmap photo;
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        if (requestCode == 9232) {
+        if (requestCode == REQ_CODE_SPEECH_INPUT_AFTER_BUTTON) {
             if (resultCode == RESULT_OK && null != data) {
 
-                ArrayList<String> result = data
-                        .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                 String command = result.get(0);
                 query = command;
                 spinner.setVisibility(View.VISIBLE);
@@ -654,50 +600,20 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         if (requestCode == REQ_CODE_SPEECH_INPUT)
         {
             if (resultCode == RESULT_OK && null != data) {
-
-                ArrayList<String> result = data
-                        .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                 String command = result.get(0);
                 query = command;
 
-                if(command.toLowerCase().contains("speak again"))
-                {
+                if(command.toLowerCase().contains("speak again")) {
                     speak();
                 }
-
                 else {
-
+                    Log.i("Speech command", command);
                     String luisIntent = getLuisIntent(command);
+                    Log.i("Luis Intent", luisIntent);
 
                     if (luisIntent.equals("help")) {
                         textToSpeech.speak(getString(R.string.help_text), TextToSpeech.QUEUE_FLUSH, null);
-                    }
-                    else if (luisIntent.equals("caption")) {
-                        type = "caption";
-                        spinner.setVisibility(View.VISIBLE);
-                        mCamera.takePicture(null, null, pictureCallback);
-
-                    }
-                    else if (luisIntent.equals("qa")) {
-                        type = "qa";
-                        spinner.setVisibility(View.VISIBLE);
-                        mCamera.takePicture(null, null, pictureCallback);
-
-                    }
-                    else if (luisIntent.equals("face")) {
-                        type = "face";
-                        spinner.setVisibility(View.VISIBLE);
-                        mCamera.takePicture(null, null, pictureCallback);
-                    }
-                    else if (luisIntent.equals("find")) {
-                        type = "find";
-                        objectFound = false;
-                        spinner.setVisibility(View.VISIBLE);
-                        mCamera.takePicture(null, null, pictureCallback);
-//                        HashMap<String, String> params = new HashMap<String, String>();
-//                        params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,"isFind");
-//                        textToSpeech.speak("Swipe right to continue searching and left to stop", TextToSpeech.QUEUE_ADD, params);
-                        detectGesture = true;
                     }
                     else if (luisIntent.equals("navigation")) {
                         textToSpeech.speak("Navigation to " + query + " is starting. Please minimize the navigation app and reopen WhiteCane.", TextToSpeech.QUEUE_ADD, null);
@@ -712,9 +628,19 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                         mapIntent.setPackage("com.google.android.apps.maps");
                         startActivity(mapIntent);
                     }
+                    else if (luisIntent.equals("find")) {
+                        type = "find";
+                        objectFound = false;
+                        spinner.setVisibility(View.VISIBLE);
+                        mCamera.takePicture(null, null, pictureCallback);
+                        detectGesture = true;
+                    }
+                    else if (luisIntent.equals("caption")) { //caption, qa, face
+                        type = luisIntent;
+                        spinner.setVisibility(View.VISIBLE);
+                        mCamera.takePicture(null, null, pictureCallback);
+                    }
                 }
-
-
             }
         }
     }

@@ -3,4 +3,5 @@
     <string name="welcome_note"> Welcome. Tap anywhere to speak. </string>
     <string name="speak_now"> Speak </string>
     <string name="help_text"> Welcome to White Cane. This application supports Scene description, Visual Question Answering, Facial Recognition and Object localisation. </string>
+    <string name="ms_api_analyze_key">2fcfdbe0f39d4c4f9fd671dce584f13a</string>
 </resources>
