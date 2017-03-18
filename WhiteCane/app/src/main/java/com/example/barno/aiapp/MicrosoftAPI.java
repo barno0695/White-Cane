@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Iterator;
 
 import org.apache.http.client.utils.URIBuilder;
 
@@ -32,11 +33,9 @@ public class MicrosoftAPI {
 
     private String stringResponse;
     private String[] entity;
-    private MicrosoftAPIKeys apiKeys;
 
     MicrosoftAPI()
     {
-        apiKeys = new MicrosoftAPIKeys();
         stringResponse = "";
         entity = new String[1];
     }
@@ -65,7 +64,13 @@ public class MicrosoftAPI {
         {
             question = question + words[i] + "%20";
         }
-        final String url = "https://api.projectoxford.ai/luis/v2.0/apps/3d75516a-6c52-42bf-9cfe-365dfa43a4f9?subscription-key=" + apiKeys.getLuisKey() + "&q=" + question;
+        String appMode = ConstantValues.APP_LUIS_MAIN;
+
+        if (DataHelper.getSharedPrefStr(ConstantValues.KEY_MODE).equals(ConstantValues.MODE_FACE)) {
+            appMode = ConstantValues.APP_LUIS_FACE;
+        }
+
+        final String url = "https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/" + appMode + "?subscription-key=" + MicrosoftAPIKeys.getLuisKey() + "&q=" + question;
 
         Thread thread = new Thread(new Runnable() {
 
@@ -104,31 +109,82 @@ public class MicrosoftAPI {
     }
 
     public void getVisionOutput(final  byte[] imageData, String queryType) throws JSONException {
-        analyzeImage(imageData);
-        if (queryType.equals("caption")) {
-            extractCaptions(stringResponse);
+        uploadImage(imageData, queryType);
+
+        System.out.println(queryType);
+
+        try
+        {
+            if (DataHelper.getSharedPrefStr(ConstantValues.KEY_MODE).equals(ConstantValues.MODE_FACE)) {
+                if (queryType.contains("count") || queryType.equals("face")) {
+                    getFaceCount(stringResponse);
+                }
+                else if (queryType.contains("age") || queryType.contains("gender")) {
+                    getFaceAttribute(stringResponse, queryType.substring(5));
+                }
+                else if (queryType.contains("emotion")) {
+                    getFaceEmotion(stringResponse);
+                }
+            }
+            else {
+                if (queryType.equals("caption")) {
+                    extractCaptions(stringResponse);
+                } else if (queryType.equals("find")) {
+                    findObject(stringResponse);
+                } else if (queryType.equals("face")) {
+                    getFaceCount(stringResponse);
+                } else if (queryType.equals("ocr")) {
+                    getOcrOutput(stringResponse);
+                }
+            }
         }
-        if (queryType.equals("find")) {
-            findObject(stringResponse);
+        catch (Exception e) {
+            e.printStackTrace();
+            Log.e("MicrosoftAPI", "get vision output");
+        }
+
+        try {
+            JSONObject error = new JSONObject(stringResponse);
+            stringResponse = "JSON error";
+            if (error.has("message")) {
+                stringResponse = error.getString("message");
+            }
+        }catch (Exception e) {
         }
     }
 
-    public void analyzeImage(final byte[] imageData) {
+    public void uploadImage(final byte[] imageData, final String queryType) {
         final HttpParams httpParams = new BasicHttpParams();
-        HttpConnectionParams.setConnectionTimeout(httpParams, 10000);
+        HttpConnectionParams.setConnectionTimeout(httpParams, 6000);
         final DefaultHttpClient httpClient = new DefaultHttpClient(httpParams);
         Thread thread = new Thread(new Runnable() {
 
             @Override
             public void run() {
                 try {
+                    String url = " ", key = " ";
+                    if (queryType.contains("emotion")) {
+                        url = "https://westus.api.cognitive.microsoft.com/emotion/v1.0/recognize";
+                        key = MicrosoftAPIKeys.getEmotionKey();
+                    }
+                    else if (queryType.contains("face")) {
+                        url = "https://westus.api.cognitive.microsoft.com/face/v1.0/detect?returnFaceId=true&returnFaceAttributes=age,gender,smile,emotion";
+                        key = MicrosoftAPIKeys.getFaceKey();
+                    }
+                    else if(queryType.equals("find") || queryType.equals("caption")) {
+                        url = "https://westus.api.cognitive.microsoft.com/vision/v1.0/analyze?visualFeatures=Description&language=en";
+                        key = MicrosoftAPIKeys.getCvKey();
+                    }
+                    else if(queryType.equals("ocr")) {
+                        url = "https://westus.api.cognitive.microsoft.com/vision/v1.0/ocr?language=en&detectOrientation=true";
+                        key = MicrosoftAPIKeys.getCvKey();
+                    }
 
-                    URIBuilder builder = new URIBuilder("https://westus.api.cognitive.microsoft.com/vision/v1.0/analyze?visualFeatures=Description&language=en");
-
+                    URIBuilder builder = new URIBuilder(url);
                     URI uri = builder.build();
                     HttpPost request = new HttpPost(uri);
                     request.setHeader("Content-Type", "application/octet-stream");
-                    request.setHeader("Ocp-Apim-Subscription-Key", apiKeys.getAnalyzeKey());
+                    request.setHeader("Ocp-Apim-Subscription-Key", key);
                     ByteArrayEntityHC4 reqEntity = new ByteArrayEntityHC4(imageData);
                     request.setEntity(reqEntity);
                     HttpResponse response = httpClient.execute(request);
@@ -173,5 +229,75 @@ public class MicrosoftAPI {
         stringResponse = "Try Again";
     }
 
+    private void getFaceCount(String retSrc) throws JSONException {
+        JSONArray resultObj = new JSONArray(retSrc);
+        stringResponse = "There are " + Integer.toString(resultObj.length()) + " people in front of you";
+    }
 
+    private void getFaceAttribute(String retSrc, String attribute) throws JSONException {
+        JSONArray resultObj = new JSONArray(retSrc);
+        if (resultObj.length() == 0) {
+            stringResponse = "There is no one in front of you";
+        }
+        else {
+            if (attribute.equals("age")) {
+                stringResponse = "Their age is around ";
+                for(int i=0; i<resultObj.length(); i++) {
+                    JSONObject person = resultObj.getJSONObject(i);
+                    JSONObject attribs = person.getJSONObject("faceAttributes");
+                    stringResponse = stringResponse.concat(Double.toString(attribs.getDouble("age")) + ", ");
+                }
+            }
+            else if (attribute.equals("gender")) {
+                stringResponse = "Their gender is ";
+                for(int i=0; i<resultObj.length(); i++) {
+                    JSONObject person = resultObj.getJSONObject(i);
+                    JSONObject attribs = person.getJSONObject("faceAttributes");
+                    stringResponse = stringResponse.concat(attribs.getString("gender") + ", ");
+                }
+            }
+
+        }
+    }
+
+    private void getFaceEmotion(String retSrc) throws JSONException {
+        stringResponse = "Their expression is ";
+        JSONArray resultObj = new JSONArray(retSrc);
+        for (int i=0; i< resultObj.length(); i++) {
+            JSONObject person = resultObj.getJSONObject(i);
+            JSONObject scoreObj = person.getJSONObject("scores");
+            double max = 0;
+            String resultEmotion = "";
+            Iterator<String> emotions = scoreObj.keys();
+            while (emotions.hasNext()) {
+                String emotion = (String) emotions.next();
+                double value = scoreObj.getDouble(emotion);
+                if (value > max) {
+                    max = value;
+                    resultEmotion = emotion;
+                }
+            }
+            stringResponse = stringResponse.concat(resultEmotion + ", ");
+        }
+
+    }
+
+    private void getOcrOutput(String retSrc) throws JSONException {
+        stringResponse = "";
+        JSONObject resultObj = new JSONObject(retSrc);
+        System.out.println(resultObj);
+        JSONArray regions = resultObj.getJSONArray("regions");
+        for (int i=0; i< regions.length(); i++) {
+            JSONObject region = regions.getJSONObject(i);
+            JSONArray lines = region.getJSONArray("lines");
+            for (int j=0; j< lines.length(); j++) {
+                JSONObject line = lines.getJSONObject(j);
+                JSONArray words = line.getJSONArray("words");
+                for (int k=0; k<words.length(); k++) {
+                    String word = words.getJSONObject(k).getString("text");
+                    stringResponse = stringResponse.concat(word.toLowerCase() + " ");
+                }
+            }
+        }
+    }
 }

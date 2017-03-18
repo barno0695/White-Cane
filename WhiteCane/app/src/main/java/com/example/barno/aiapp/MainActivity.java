@@ -3,7 +3,9 @@ package com.example.barno.aiapp;
 import android.Manifest;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -54,10 +56,7 @@ import java.util.Locale;
 public class MainActivity extends Activity implements GestureDetector.OnGestureListener,
         GestureDetector.OnDoubleTapListener {
 
-    private static final int REQ_CODE_SPEECH_INPUT = 1890;
-    private static final int REQ_CODE_SPEECH_INPUT_AFTER_BUTTON = 1900;
     private ImageView imageView;
-    private TextView txtSpeechInput;
     TextToSpeech textToSpeech;
     EditText captionText;
     EditText ipText;
@@ -74,13 +73,19 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     Boolean detectGesture;
     ImageButton captionButton;
     ImageButton qaButton;
-    ImageButton facesButton;
+    ImageButton faceModeButton;
+    ImageButton navigationButton;
     ImageButton findButton;
+    ImageButton ocrButton;
     ImageButton helpButton;
     ImageButton showRating;
+    ImageButton faceCountButton;
+    ImageButton faceAgeButton;
+    ImageButton faceGenderButton;
+    ImageButton faceEmotionButton;
     RelativeLayout ratingLayout;
     TextView giveRating;
-
+    TextView modeTextView;
 
     /** A safe way to get an instance of the Camera object. */
     public static Camera getCameraInstance(){
@@ -94,8 +99,6 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         return c; // returns null if camera is unavailable
     }
 
-
-
     private void releaseCamera(){
         if (mCamera != null){
             mCamera.release();        // release the camera for other applications
@@ -104,8 +107,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     }
 
     public void screenTapped(View view) {
-//        Toast.makeText(getApplicationContext(), "Screen tapped", Toast.LENGTH_SHORT).show();
-        promptSpeechInput();
+        promptSpeechInput(true);
     }
 
     final Camera.PictureCallback pictureCallback = new Camera.PictureCallback() {
@@ -118,7 +120,9 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             Matrix matrix = new Matrix();
             matrix.postRotate(90);
             photo = Bitmap.createBitmap(photo, 0, 0, photo.getWidth(), photo.getHeight(), matrix, true);
-            photo = Bitmap.createScaledBitmap(photo, 512, 512, false);
+            photo = Bitmap.createScaledBitmap(photo, 1875, 2500, false);
+            System.out.println(photo.getWidth());
+            System.out.println(photo.getHeight());
             imageView.setImageBitmap(photo);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             photo.compress(Bitmap.CompressFormat.JPEG, 100, bos);
@@ -185,8 +189,6 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             speak();
 
             if (type == "find" && objectFound == false) {
-//                HashMap<String, String> params = new HashMap<String, String>();
-//                params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,"isFind");
                 textToSpeech.speak("Swipe right to continue searching and left to stop", TextToSpeech.QUEUE_ADD, null);
                 detectGesture = true;
             }
@@ -214,14 +216,20 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         }
     }
 
+//    protected void onUpdate() {
+//        updateMode();
+//    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         checkPermisions();
+        try {
+            updateMode();
+        } catch (Exception e) {
+        }
         setContentView(R.layout.activity_main);
         this.imageView = (ImageView)this.findViewById(R.id.imageHolder);
-        this.txtSpeechInput = (TextView) this.findViewById(R.id.txtSpeechInput);
         this.ipText = (EditText) this.findViewById(R.id.ipText);
         this.showIP = (ImageButton) this.findViewById(R.id.showIP);
         this.changeIP = (TextView) this.findViewById(R.id.changeIP);
@@ -229,8 +237,14 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         this.captionButton = (ImageButton) this.findViewById(R.id.captionButton);
         this.qaButton = (ImageButton) this.findViewById(R.id.qaButton);
         this.helpButton = (ImageButton) this.findViewById(R.id.helpButton);
-        this.facesButton = (ImageButton) this.findViewById(R.id.facesButton);
+        this.faceModeButton = (ImageButton) this.findViewById(R.id.faceModeButton);
+        this.navigationButton = (ImageButton) this.findViewById(R.id.navigationButton);
         this.findButton = (ImageButton) this.findViewById(R.id.findButton);
+        this.ocrButton = (ImageButton) this.findViewById(R.id.ocrButton);
+        this.faceCountButton = (ImageButton) this.findViewById(R.id.faceCountButton);
+        this.faceAgeButton = (ImageButton) this.findViewById(R.id.faceAgeButton);
+        this.faceGenderButton = (ImageButton) this.findViewById(R.id.faceGenderButton);
+        this.faceEmotionButton = (ImageButton) this.findViewById(R.id.faceEmotionButton);
         mCamera = getCameraInstance();
         mCamera.setDisplayOrientation(90);
         spinner = (TextView) findViewById(R.id.progress);
@@ -242,12 +256,14 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         giveRating = (TextView) findViewById(R.id.giveRating);
         showRating = (ImageButton) findViewById(R.id.showRating);
         ratingLayout = (RelativeLayout) findViewById(R.id.ratingsLayout);
+        modeTextView = (TextView) findViewById(R.id.modeText);
 
+        DataHelper.setSharedPref(getSharedPreferences(ConstantValues.KEY_SHARED_PREF, Context.MODE_PRIVATE));
+        DataHelper.saveSharedPrefStr(ConstantValues.KEY_MODE, ConstantValues.MODE_MAIN);
 
         // Set the gesture detector as the double tap
         // listener.
         mDetector.setOnDoubleTapListener(this);
-
 
         mPreview = new CameraPreview(this, mCamera);
         FrameLayout preview = (FrameLayout) findViewById(R.id.cameraPreview);
@@ -295,41 +311,40 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             public void onClick(View v) {
                 type = "caption";
                 spinner.setVisibility(View.VISIBLE);
-                mCamera.takePicture(null,null,pictureCallback);
+                capturePicture(mCamera);
             }
         });
 
-        facesButton.setOnClickListener(new View.OnClickListener() {
+        faceModeButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 type = "face";
-                spinner.setVisibility(View.VISIBLE);
-                mCamera.takePicture(null,null,pictureCallback);
+                String newMode = ConstantValues.MODE_MAIN;
+                boolean capturePhoto = false;
+
+                if (DataHelper.getSharedPrefStr(ConstantValues.KEY_MODE).equals(ConstantValues.MODE_MAIN)) {
+                    newMode = ConstantValues.MODE_FACE;
+                    capturePhoto = true;
+                }
+
+                DataHelper.saveSharedPrefStr(ConstantValues.KEY_MODE, newMode);
+
+                updateMode();
+
+                if (capturePhoto) {
+                    spinner.setVisibility(View.VISIBLE);
+                    capturePicture(mCamera);
+                }
             }
         });
-
-
 
         findButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 type = "find";
-                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-                intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
-                        "Speak");
-                try {
-                    startActivityForResult(intent, REQ_CODE_SPEECH_INPUT_AFTER_BUTTON);
-                } catch (ActivityNotFoundException a) {
-                    Toast.makeText(getApplicationContext(),
-                            "Speech not supported",
-                            Toast.LENGTH_SHORT).show();
-                }
-//                mCamera.takePicture(null,null,pictureCallback);
+                promptSpeechInput(false);
             }
         });
 
@@ -338,19 +353,26 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             @Override
             public void onClick(View v) {
                 type = "qa";
-                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-                intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
-                        "Speak");
-                try {
-                    startActivityForResult(intent, REQ_CODE_SPEECH_INPUT_AFTER_BUTTON);
-                } catch (ActivityNotFoundException a) {
-                    Toast.makeText(getApplicationContext(),
-                            "Speech not supported",
-                            Toast.LENGTH_SHORT).show();
-                }
+                promptSpeechInput(false);
+            }
+        });
+
+        navigationButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                type = "navigation";
+                promptSpeechInput(false);
+            }
+        });
+
+        ocrButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                type = "ocr";
+                spinner.setVisibility(View.VISIBLE);
+                capturePicture(mCamera);
             }
         });
 
@@ -359,6 +381,46 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             @Override
             public void onClick(View v) {
                 textToSpeech.speak(getString(R.string.help_text), TextToSpeech.QUEUE_FLUSH, null);
+            }
+        });
+
+        faceCountButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                type = "face_count";
+                spinner.setVisibility(View.VISIBLE);
+                capturePicture(mCamera);
+            }
+        });
+
+        faceAgeButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                type = "face_age";
+                spinner.setVisibility(View.VISIBLE);
+                capturePicture(mCamera);
+            }
+        });
+
+        faceEmotionButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                type = "face_emotion";
+                spinner.setVisibility(View.VISIBLE);
+                capturePicture(mCamera);
+            }
+        });
+
+        faceGenderButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                type = "face_gender";
+                spinner.setVisibility(View.VISIBLE);
+                capturePicture(mCamera);
             }
         });
 
@@ -389,18 +451,60 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                     }
                 });
 
-
                 if(status != TextToSpeech.ERROR) {
                     textToSpeech.setLanguage(Locale.UK);
                 }
-
                 speak();
-
             }
 
 
         });
 
+    }
+
+    public void capturePicture(final Camera mCamera) {
+        mCamera.autoFocus(new Camera.AutoFocusCallback() {
+            @Override
+            public void onAutoFocus(boolean b, Camera camera) {
+                    mCamera.takePicture(null, null, pictureCallback);
+            }
+        });
+
+    }
+
+    public void updateMode() {
+        int mainVisibility = View.VISIBLE;
+        int faceVisibility = View.GONE;
+        String modeText = "Main mode";
+        int modeButton = R.mipmap.ic_people;
+
+        if (DataHelper.getSharedPrefStr(ConstantValues.KEY_MODE).equals(ConstantValues.MODE_FACE)) {
+            mainVisibility = View.GONE;
+            faceVisibility = View.VISIBLE;
+            modeText = "People mode";
+            modeButton = R.mipmap.ic_main;
+            detectGesture = true;
+        }
+
+        captionButton.setVisibility(mainVisibility);
+        qaButton.setVisibility(mainVisibility);
+        navigationButton.setVisibility(mainVisibility);
+        findButton.setVisibility(mainVisibility);
+        ocrButton.setVisibility(mainVisibility);
+
+        faceCountButton.setVisibility(faceVisibility);
+        faceAgeButton.setVisibility(faceVisibility);
+        faceGenderButton.setVisibility(faceVisibility);
+        faceEmotionButton.setVisibility(faceVisibility);
+
+        faceModeButton.setImageResource(modeButton);
+
+        modeTextView.setText(modeText);
+
+        textToSpeech.speak(modeText, TextToSpeech.QUEUE_ADD, null);
+        if (modeText.equals("People mode")) {
+            textToSpeech.speak("Swipe right to exit to main mode", TextToSpeech.QUEUE_ADD, null);
+        }
     }
 
     @Override
@@ -426,7 +530,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     @Override
     public void onLongPress(MotionEvent event) {
 //        Log.d("touch event", "onLongPress: " + event.toString());
-        promptSpeechInput();
+        promptSpeechInput(true);
     }
 
     @Override
@@ -440,7 +544,13 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             else if (e2.getAxisValue(0) - e1.getAxisValue(0) > 50) {
                 detectGesture = false;
                 spinner.setVisibility(View.VISIBLE);
-                mCamera.takePicture(null, null, pictureCallback);
+                capturePicture(mCamera);
+            }
+        }
+        else if (DataHelper.getSharedPrefStr(ConstantValues.KEY_MODE).equals(ConstantValues.MODE_FACE)) {
+            if (e2.getAxisValue(0) - e1.getAxisValue(0) > 50) {
+                DataHelper.saveSharedPrefStr(ConstantValues.KEY_MODE, ConstantValues.MODE_MAIN);
+                updateMode();
             }
         }
         return true;
@@ -454,7 +564,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     @Override
     public boolean onSingleTapUp(MotionEvent event) {
 //        Log.d("touch event", "onSingleTapUp: " + event.toString());
-        promptSpeechInput();
+        promptSpeechInput(true);
         return true;
     }
 
@@ -497,7 +607,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
     }
 
-    private void promptSpeechInput() {
+    private void promptSpeechInput(boolean useLuis) {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -505,7 +615,11 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
                 "Speak");
         try {
-            startActivityForResult(intent, REQ_CODE_SPEECH_INPUT);
+            int intentCode = ConstantValues.REQ_CODE_SPEECH_INPUT_AFTER_BUTTON;
+            if(useLuis) {
+                intentCode = ConstantValues.REQ_CODE_SPEECH_INPUT;
+            }
+            startActivityForResult(intent, intentCode);
         } catch (ActivityNotFoundException a) {
             Toast.makeText(getApplicationContext(),
                     "Speech not supported",
@@ -581,23 +695,40 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         return msAPi.getStringResponse();
     }
 
-    Bitmap photo;
+    public void navigate()
+    {
+        textToSpeech.speak("Navigation to " + query + " is starting. Please minimize the navigation app and reopen WhiteCane.", TextToSpeech.QUEUE_ADD, null);
+        String location = "";
+        String[] words = query.split(" ");
+        for(int i=0; i<words.length; i++)
+        {
+            location = location + words[i] + "+";
+        }
+        Uri gmmIntentUri = Uri.parse("google.navigation:q=" + location + "&mode=w");
+        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+        mapIntent.setPackage("com.google.android.apps.maps");
+        startActivity(mapIntent);
+    }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        if (requestCode == REQ_CODE_SPEECH_INPUT_AFTER_BUTTON) {
+        if (requestCode == ConstantValues.REQ_CODE_SPEECH_INPUT_AFTER_BUTTON) {
             if (resultCode == RESULT_OK && null != data) {
-
                 ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                 String command = result.get(0);
                 query = command;
-                spinner.setVisibility(View.VISIBLE);
-                mCamera.takePicture(null, null, pictureCallback);
 
+                if (type == "navigation") {
+                    navigate();
+                }
+                else {
+                    spinner.setVisibility(View.VISIBLE);
+                    capturePicture(mCamera);
+                }
             }
         }
 
-        if (requestCode == REQ_CODE_SPEECH_INPUT)
+        if (requestCode == ConstantValues.REQ_CODE_SPEECH_INPUT)
         {
             if (resultCode == RESULT_OK && null != data) {
                 ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
@@ -616,29 +747,19 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                         textToSpeech.speak(getString(R.string.help_text), TextToSpeech.QUEUE_FLUSH, null);
                     }
                     else if (luisIntent.equals("navigation")) {
-                        textToSpeech.speak("Navigation to " + query + " is starting. Please minimize the navigation app and reopen WhiteCane.", TextToSpeech.QUEUE_ADD, null);
-                        String location = "";
-                        String[] words = query.split(" ");
-                        for(int i=0; i<words.length; i++)
-                        {
-                            location = location + words[i] + "+";
-                        }
-                        Uri gmmIntentUri = Uri.parse("google.navigation:q=" + location);
-                        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-                        mapIntent.setPackage("com.google.android.apps.maps");
-                        startActivity(mapIntent);
+                        navigate();
                     }
                     else if (luisIntent.equals("find")) {
                         type = "find";
                         objectFound = false;
                         spinner.setVisibility(View.VISIBLE);
-                        mCamera.takePicture(null, null, pictureCallback);
+                        capturePicture(mCamera);
                         detectGesture = true;
                     }
-                    else if (luisIntent.equals("caption")) { //caption, qa, face
+                    else if (luisIntent.equals("caption") || luisIntent.contains("face") || luisIntent.contains("qa") || luisIntent.contains("ocr")) {
                         type = luisIntent;
                         spinner.setVisibility(View.VISIBLE);
-                        mCamera.takePicture(null, null, pictureCallback);
+                        capturePicture(mCamera);
                     }
                 }
             }
