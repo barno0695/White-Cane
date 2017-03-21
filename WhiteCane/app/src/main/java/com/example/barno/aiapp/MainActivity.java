@@ -15,6 +15,7 @@ import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
@@ -86,6 +87,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     RelativeLayout ratingLayout;
     TextView giveRating;
     TextView modeTextView;
+    String response;
 
     /** A safe way to get an instance of the Camera object. */
     public static Camera getCameraInstance(){
@@ -142,27 +144,27 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                 reqEntity.addPart("file", contentPart);
                 reqEntity.addPart("text", textPart);
 
+                 response = "No response";
+
                 Thread thread = new Thread(new Runnable() {
 
                     @Override
                     public void run() {
-                        String response = "No response";
                         try {
                             Log.i("qa", "url = http://" + ipText.getText() + ":5000/" + type);
                             response = multipost("http://" + ipText.getText() + ":5000/" + type, reqEntity);
-                            System.out.println("**********************************" + response);
-                            captionText.setText(response);
+                            Log.d("server response", response);
                         } catch (Exception e) {
                             Log.e("qa","post request");
                             e.printStackTrace();
                             response = "There was a network error";
-                            captionText.setText(response);
                         }
                     }
                 });
                 thread.start();
                 try {
                     thread.join();
+                    captionText.setText(response);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
