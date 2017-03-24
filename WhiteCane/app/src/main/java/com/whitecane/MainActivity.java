@@ -594,7 +594,11 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     public void speak()
     {
         String toSpeak = captionText.getText().toString();
-        Toast.makeText(getApplicationContext(), toSpeak,Toast.LENGTH_SHORT).show();
+        String toastText = toSpeak;
+        if (type.equals("qa")) {
+            toastText = query + "\n" + toSpeak;
+        }
+        Toast.makeText(getApplicationContext(), toastText, Toast.LENGTH_SHORT).show();
         textToSpeech.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
     }
 
