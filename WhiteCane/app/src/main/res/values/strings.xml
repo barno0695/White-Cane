@@ -2,5 +2,7 @@
     <string name="app_name"> WhiteCane </string>
     <string name="welcome_note"> Welcome. Tap anywhere to speak. </string>
     <string name="speak_now"> Speak </string>
-    <string name="help_text"> Welcome to White Cane. This application supports two modes : Main mode, and People mode. Main mode supports Scene description, Navigation, Object localisation, OCR, and Visual Question Answering. People mode supports people count, emotion, gender, and age. </string>
+    <string name="help_text"> Welcome to White Cane. This application supports two modes : Main mode, and People mode. Main mode supports Scene description, Currency Recognition, Navigation, Object localisation, OCR, and Visual Question Answering. People mode supports people count, emotion, gender, and age. </string>
+    <string name="server_ip"> xxxx </string>
+
 </resources>

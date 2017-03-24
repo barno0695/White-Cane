@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="250dp"
+    android:layout_height="400dp"
+    android:gravity="center"
+    android:background="#DDDDDD">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="340dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:text="Server IP"
+                android:textAlignment="gravity"
+                android:textColor="#000000"
+                android:textSize="30dp"/>
+
+            <EditText
+                android:id="@+id/ipText"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_centerHorizontal="true"
+                android:background="#FFFFFF"
+                android:gravity="center"
+                android:text="@string/server_ip"
+                android:inputType="textPassword"
+                android:textSize="20dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:text="Caption Image Height"
+                android:textAlignment="gravity"
+                android:textColor="#000000"
+                android:textSize="22dp"/>
+
+            <EditText
+                android:id="@+id/captionHeightalue"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_centerHorizontal="true"
+                android:background="#FFFFFF"
+                android:gravity="center"
+                android:text="682"
+                android:inputType="textPassword"
+                android:textSize="20dp" />
+
+            <TextView
+                android:id="@+id/textView10"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:text="Caption Image Width"
+                android:textAlignment="gravity"
+                android:textColor="#000000"
+                android:textSize="22dp" />
+
+            <SeekBar
+                android:id="@+id/seekBar2"
+                style="@style/Widget.AppCompat.SeekBar.Discrete"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:max="1900"
+                android:progress="100" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/saveSettings"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/ipText"
+        android:layout_centerHorizontal="true"
+        android:background="@android:color/holo_green_dark"
+        android:gravity="center"
+        android:src="@android:drawable/ic_menu_edit"
+        android:text="Save"
+        android:textColor="#FFFFFF"
+        android:textSize="30dp" />
+
+</LinearLayout>

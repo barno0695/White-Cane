@@ -12,11 +12,11 @@
     android:gravity="center">
 
     <ImageButton
-        android:id="@+id/showIP"
+        android:id="@+id/settingsButton"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_alignParentLeft="true"
-        android:contentDescription="Show I P"
+        android:contentDescription="Settings"
         android:elevation="5dp"
         android:src="@android:drawable/ic_menu_preferences"
         android:translationZ="10dp" />
@@ -46,21 +46,12 @@
         android:src="@android:drawable/ic_menu_help"
         android:contentDescription="Help" />
 
-    <ImageButton
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_alignParentLeft="true"
-        android:elevation="5dp"
-        android:id="@+id/showRating"
-        android:src="@android:drawable/btn_star"
-        android:contentDescription="Ratings"
-        android:visibility="gone"/>
-
     <LinearLayout
+        android:id="@+id/buttonRow1"
         android:layout_width="wrap_content"
         android:layout_height="50dp"
-        android:layout_alignParentBottom="true"
         android:elevation="5dp"
+        android:layout_above="@+id/buttonRow2"
         android:layout_centerHorizontal="true">
 
         <ImageButton
@@ -72,12 +63,13 @@
             android:src="@mipmap/ic_caption" />
 
         <ImageButton
-            android:id="@+id/faceModeButton"
+            android:id="@+id/findButton"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:contentDescription="People mode"
+            android:layout_weight="1"
+            android:contentDescription="Help me Find"
             android:elevation="5dp"
-            android:src="@mipmap/ic_people" />
+            android:src="@mipmap/ic_find" />
 
         <ImageButton
             android:id="@+id/currencyButton"
@@ -86,6 +78,24 @@
             android:contentDescription="Recognize Currency"
             android:elevation="5dp"
             android:src="@mipmap/ic_currency" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/buttonRow2"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:elevation="5dp"
+        android:layout_centerHorizontal="true">
+
+        <ImageButton
+            android:id="@+id/faceModeButton"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:contentDescription="People mode"
+            android:elevation="5dp"
+            android:src="@mipmap/ic_people" />
 
         <ImageButton
             android:id="@+id/navigationButton"
@@ -94,14 +104,6 @@
             android:contentDescription="Navigation"
             android:elevation="5dp"
             android:src="@mipmap/ic_nav" />
-
-        <ImageButton
-            android:id="@+id/findButton"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:contentDescription="Help me Find"
-            android:elevation="5dp"
-            android:src="@mipmap/ic_find" />
 
         <ImageButton
             android:id="@+id/ocrButton"
@@ -173,83 +175,14 @@
         android:visibility="gone"/>
 
     <RelativeLayout
-        android:layout_width="300dp"
-        android:layout_height="115dp"
-        android:elevation="5dp"
-        android:background="#F3F3F3"
-        android:id="@+id/ratingsLayout"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:translationZ="15dp"
+        android:id="@+id/settingsLayout"
         android:visibility="gone">
 
-        <RatingBar
-        android:layout_width="wrap_content"
-        android:layout_height="60dp"
-        android:id="@+id/ratingBar"
-        android:elevation="5dp" />
-
-        <TextView
-            android:layout_width="100dp"
-            android:layout_height="50dp"
-            android:background="@android:color/holo_green_dark"
-            android:id="@+id/giveRating"
-            android:layout_below="@id/ratingBar"
-            android:layout_centerHorizontal="true"
-            android:text="Rate"
-            android:textColor="#F3F3F3"
-            android:textSize="30dp"
-            android:gravity="center"
-            android:src="@android:drawable/ic_menu_edit" />
-
-    </RelativeLayout>
-
-    <RelativeLayout
-        android:id="@+id/ipLayout"
-        android:layout_width="300dp"
-        android:layout_height="150dp"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
-        android:background="#F3F3F3"
-        android:elevation="5dp"
-        android:translationZ="10dp"
-        android:visibility="gone">
-
-        <TextView
-            android:id="@+id/setIPText"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:gravity="center"
-            android:text="Set Server IP"
-            android:textAlignment="gravity"
-            android:textColor="#000000"
-            android:textSize="30dp"
-            android:textStyle="bold" />
-
-        <EditText
-            android:id="@+id/ipText"
-            android:layout_width="270dp"
-            android:layout_height="50dp"
-            android:layout_below="@+id/setIPText"
-            android:layout_centerHorizontal="true"
-            android:background="#FFFFFF"
-            android:gravity="center"
-            android:text="xxxx"
-            android:inputType="textPassword"
-            android:textSize="20dp" />
-
-        <TextView
-            android:id="@+id/changeIP"
-            android:layout_width="100dp"
-            android:layout_height="50dp"
-            android:layout_below="@id/ipText"
-            android:layout_centerHorizontal="true"
-            android:background="@android:color/holo_green_dark"
-            android:gravity="center"
-            android:src="@android:drawable/ic_menu_edit"
-            android:text="Save"
-            android:textColor="#FFFFFF"
-            android:textSize="30dp" />
-
+        <include android:id="@+id/settingsOverlay" layout="@layout/layout_settings" />
     </RelativeLayout>
 
     <LinearLayout
@@ -266,72 +199,19 @@
             android:id="@+id/cameraPreview">
         </FrameLayout>
 
-        <ProgressBar
-        android:id="@+id/progressBar1"
-        style="?android:attr/progressBarStyleLarge"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_centerHorizontal="true"
-        android:visibility="gone"/>
-
-    <ImageView
-        android:id="@+id/imageHolder"
-        android:layout_height="300dp"
-        android:layout_width="match_parent" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:weightSum="2">
-
-        <Button
+        <EditText
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Camera"
-            android:id="@+id/cameraButton"
-            android:visibility="gone" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Gallery"
             android:visibility="gone"
-            android:id="@+id/galleryButton" />
+            android:id="@+id/captionText"
+            android:text="@string/welcome_note" />
 
-        <Button
+        <EditText
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Listen again"
             android:visibility="gone"
-            android:id="@+id/listenButton" />
-
+            android:id="@+id/txtSpeechInput"
+            android:text="@string/welcome_note"/>
     </LinearLayout>
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:id="@+id/captionText"
-        android:text="@string/welcome_note" />
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:id="@+id/txtSpeechInput"
-        android:text="@string/welcome_note"/>
-
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Command"
-        android:visibility="gone"
-        android:id="@+id/commandButton" />
-    </LinearLayout>
-
 
 </RelativeLayout>

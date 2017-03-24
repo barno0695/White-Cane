@@ -31,6 +31,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -57,13 +58,12 @@ import java.util.Locale;
 public class MainActivity extends Activity implements GestureDetector.OnGestureListener,
         GestureDetector.OnDoubleTapListener {
 
-    private ImageView imageView;
     TextToSpeech textToSpeech;
     EditText captionText;
     EditText ipText;
-    ImageButton showIP;
-    TextView changeIP;
-    RelativeLayout ipLayout;
+    ImageButton settingsButton;
+    TextView saveSettings;
+    RelativeLayout settingsLayout;
     CameraPreview mPreview;
     Camera mCamera;
     TextView spinner;
@@ -79,14 +79,11 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     ImageButton findButton;
     ImageButton ocrButton;
     ImageButton helpButton;
-    ImageButton showRating;
     ImageButton faceCountButton;
     ImageButton faceAgeButton;
     ImageButton faceGenderButton;
     ImageButton faceEmotionButton;
     ImageButton currencyButton;
-    RelativeLayout ratingLayout;
-    TextView giveRating;
     TextView modeTextView;
     String response;
 
@@ -127,15 +124,14 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             int photoHeight = 682;
             int photoWidth = 512;
             if (type.equals("ocr") || type.contains("face")) {
-                photoHeight = 2500;
-                photoWidth = 1875;
+                photoHeight = 1250;
+                photoWidth = 947;
             }
             else if (type.equals("find")) {
                 photoHeight = 228;
                 photoWidth = 304;
             }
             photo = Bitmap.createScaledBitmap(photo, photoWidth, photoHeight, false);
-            imageView.setImageBitmap(photo);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             photo.compress(Bitmap.CompressFormat.JPEG, 100, bos);
 
@@ -228,24 +224,20 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         }
     }
 
-//    protected void onUpdate() {
-//        updateMode();
-//    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         checkPermisions();
         try {
+            DataHelper.saveSharedPrefStr(ConstantValues.KEY_MODE, ConstantValues.MODE_MAIN);
             updateMode();
         } catch (Exception e) {
         }
         setContentView(R.layout.activity_main);
-        this.imageView = (ImageView)this.findViewById(R.id.imageHolder);
         this.ipText = (EditText) this.findViewById(R.id.ipText);
-        this.showIP = (ImageButton) this.findViewById(R.id.showIP);
-        this.changeIP = (TextView) this.findViewById(R.id.changeIP);
-        this.ipLayout = (RelativeLayout) this.findViewById(R.id.ipLayout);
+        this.settingsButton = (ImageButton) this.findViewById(R.id.settingsButton);
+        this.saveSettings = (TextView) this.findViewById(R.id.saveSettings);
+        this.settingsLayout = (RelativeLayout) this.findViewById(R.id.settingsLayout);
         this.captionButton = (ImageButton) this.findViewById(R.id.captionButton);
         this.qaButton = (ImageButton) this.findViewById(R.id.qaButton);
         this.helpButton = (ImageButton) this.findViewById(R.id.helpButton);
@@ -266,9 +258,6 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         objectFound = false;
         detectGesture = false;
         mDetector = new GestureDetectorCompat(this,this);
-        giveRating = (TextView) findViewById(R.id.giveRating);
-        showRating = (ImageButton) findViewById(R.id.showRating);
-        ratingLayout = (RelativeLayout) findViewById(R.id.ratingsLayout);
         modeTextView = (TextView) findViewById(R.id.modeText);
 
         DataHelper.setSharedPref(getSharedPreferences(ConstantValues.KEY_SHARED_PREF, Context.MODE_PRIVATE));
@@ -282,38 +271,20 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         FrameLayout preview = (FrameLayout) findViewById(R.id.cameraPreview);
         preview.addView(mPreview);
 
-        showIP.setOnClickListener(new View.OnClickListener() {
+        settingsButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                ipLayout.setVisibility(View.VISIBLE);
+                settingsLayout.setVisibility(View.VISIBLE);
             }
         });
 
-        showRating.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                ratingLayout.setVisibility(View.VISIBLE);
-            }
-        });
-
-        changeIP.setOnClickListener(new View.OnClickListener() {
+        saveSettings.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 if (!ipText.getText().equals("")) {
-                    ipLayout.setVisibility(View.GONE);
-                }
-            }
-        });
-
-        giveRating.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                if (!ipText.getText().equals("")) {
-                    ratingLayout.setVisibility(View.GONE);
+                    settingsLayout.setVisibility(View.GONE);
                 }
             }
         });
@@ -511,6 +482,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         navigationButton.setVisibility(mainVisibility);
         findButton.setVisibility(mainVisibility);
         ocrButton.setVisibility(mainVisibility);
+        currencyButton.setVisibility(mainVisibility);
 
         faceCountButton.setVisibility(faceVisibility);
         faceAgeButton.setVisibility(faceVisibility);
@@ -752,6 +724,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                 ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                 String command = result.get(0);
                 query = command;
+                Toast.makeText(getApplicationContext(), command,Toast.LENGTH_SHORT).show();
 
                 if(command.toLowerCase().contains("speak again")) {
                     speak();
@@ -760,6 +733,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                     Log.i("Speech command", command);
                     String luisIntent = getLuisIntent(command);
                     Log.i("Luis Intent", luisIntent);
+                    Toast.makeText(getApplicationContext(), luisIntent,Toast.LENGTH_SHORT).show();
 
                     if (luisIntent.equals("help")) {
                         textToSpeech.speak(getString(R.string.help_text), TextToSpeech.QUEUE_FLUSH, null);
@@ -775,6 +749,13 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                     }
                     else { //caption, face, qa, ocr, currency
                         type = luisIntent;
+                        if(type.equals("face")) {
+                            if (DataHelper.getSharedPrefStr(ConstantValues.KEY_MODE).equals(ConstantValues.MODE_MAIN)) {
+                                DataHelper.saveSharedPrefStr(ConstantValues.KEY_MODE, ConstantValues.MODE_FACE);
+                                updateMode();
+                            }
+                        }
+
                         startCapture();
                     }
                 }
