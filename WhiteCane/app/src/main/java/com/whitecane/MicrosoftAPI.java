@@ -1,4 +1,4 @@
-package com.example.barno.aiapp;
+package com.whitecane;
 
 import android.support.v4.content.res.TypedArrayUtils;
 import android.util.Log;
@@ -83,7 +83,6 @@ public class MicrosoftAPI {
                     InputStream response = connection.getInputStream();
                     java.util.Scanner s = new java.util.Scanner(response).useDelimiter("\\A");
                     String resp = s.hasNext() ? s.next() : "";
-                    System.out.println(resp);
                     try {
                         JSONObject json = new JSONObject(resp);
                         JSONObject topIntent = json.getJSONObject("topScoringIntent");
@@ -111,7 +110,7 @@ public class MicrosoftAPI {
     public void getVisionOutput(final  byte[] imageData, String queryType) throws JSONException {
         uploadImage(imageData, queryType);
 
-        System.out.println(queryType);
+        Log.i("query type", queryType);
 
         try
         {
@@ -285,7 +284,6 @@ public class MicrosoftAPI {
     private void getOcrOutput(String retSrc) throws JSONException {
         stringResponse = "";
         JSONObject resultObj = new JSONObject(retSrc);
-        System.out.println(resultObj);
         JSONArray regions = resultObj.getJSONArray("regions");
         for (int i=0; i< regions.length(); i++) {
             JSONObject region = regions.getJSONObject(i);
@@ -298,6 +296,9 @@ public class MicrosoftAPI {
                     stringResponse = stringResponse.concat(word.toLowerCase() + " ");
                 }
             }
+        }
+        if (stringResponse == "") {
+            stringResponse = "No text found";
         }
     }
 }

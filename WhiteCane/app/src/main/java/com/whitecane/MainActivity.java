@@ -1,4 +1,4 @@
-package com.example.barno.aiapp;
+package com.whitecane;
 
 import android.Manifest;
 import android.app.Activity;
@@ -123,13 +123,11 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             matrix.postRotate(90);
             photo = Bitmap.createBitmap(photo, 0, 0, photo.getWidth(), photo.getHeight(), matrix, true);
             photo = Bitmap.createScaledBitmap(photo, 1875, 2500, false);
-            System.out.println(photo.getWidth());
-            System.out.println(photo.getHeight());
             imageView.setImageBitmap(photo);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             photo.compress(Bitmap.CompressFormat.JPEG, 100, bos);
 
-            if(type.equals("qa")) {
+            if(type.equals("qa")) {  // Request to server
                 String filename = "filename.png";
                 ContentBody contentPart = new ByteArrayBody(bos.toByteArray(), filename);
                 ContentBody textPart = null;
@@ -174,7 +172,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
 
                 if(type.equals("find")) {
                     msApi.setEntity(query);
-                    System.out.println("finding " + query);
+                    Log.i("finding object", query);
                 }
                 try {
                     msApi.getVisionOutput(bos.toByteArray(),type);

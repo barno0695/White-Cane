@@ -1,4 +1,4 @@
-package com.example.barno.aiapp;
+package com.whitecane;
 
 /**
  * Created by barno on 9/1/17.

@@ -1,4 +1,4 @@
-package com.example.barno.aiapp;
+package com.whitecane;
 
 import android.app.Activity;
 import android.content.Intent;

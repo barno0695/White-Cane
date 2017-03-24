@@ -1,4 +1,4 @@
-package com.example.barno.aiapp;
+package com.whitecane;
 
 import android.content.Context;
 import android.content.SharedPreferences;
