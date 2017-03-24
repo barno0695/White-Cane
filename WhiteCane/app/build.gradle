@@ -4,9 +4,15 @@ android {
     signingConfigs {
         config {
             keyAlias 'key0'
-            keyPassword 'wcane@123'
+            keyPassword 'xxxx'
             storeFile file('/media/barno/Files/work/WhiteCane/signedApkKey.jks')
-            storePassword 'wcane@123'
+            storePassword 'xxxx'
+        }
+        config1 {
+            keyAlias 'key1'
+            keyPassword 'xxxx'
+            storeFile file('/media/barno/Files/work/WhiteCane/apkSign.jks')
+            storePassword 'xxxx'
         }
     }
     compileSdkVersion 25
