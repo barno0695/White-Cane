@@ -8,12 +8,6 @@ android {
             storeFile file('/media/barno/Files/work/WhiteCane/signedApkKey.jks')
             storePassword 'wcane@123'
         }
-        config1 {
-            keyAlias 'key1'
-            keyPassword 'wcane@123'
-            storeFile file('/media/barno/Files/work/WhiteCane/apkSign.jks')
-            storePassword 'wcane@123'
-        }
     }
     compileSdkVersion 25
     buildToolsVersion '25.0.0'
@@ -21,7 +15,7 @@ android {
         applicationId "com.whitecane"
         minSdkVersion 15
         targetSdkVersion 25
-        versionName "0.3.5.1"
+        versionName "0.3.5.2"
         multiDexEnabled true
         signingConfig signingConfigs.config1
         versionCode 2

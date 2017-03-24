@@ -84,6 +84,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     ImageButton faceAgeButton;
     ImageButton faceGenderButton;
     ImageButton faceEmotionButton;
+    ImageButton currencyButton;
     RelativeLayout ratingLayout;
     TextView giveRating;
     TextView modeTextView;
@@ -122,19 +123,30 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             Matrix matrix = new Matrix();
             matrix.postRotate(90);
             photo = Bitmap.createBitmap(photo, 0, 0, photo.getWidth(), photo.getHeight(), matrix, true);
-            photo = Bitmap.createScaledBitmap(photo, 1875, 2500, false);
+
+            int photoHeight = 682;
+            int photoWidth = 512;
+            if (type.equals("ocr") || type.contains("face")) {
+                photoHeight = 2500;
+                photoWidth = 1875;
+            }
+            else if (type.equals("find")) {
+                photoHeight = 228;
+                photoWidth = 304;
+            }
+            photo = Bitmap.createScaledBitmap(photo, photoWidth, photoHeight, false);
             imageView.setImageBitmap(photo);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             photo.compress(Bitmap.CompressFormat.JPEG, 100, bos);
 
-            if(type.equals("qa")) {  // Request to server
+            if(type.equals("qa") || type.equals("find") || type.equals("currency")) {  // Request to server
                 String filename = "filename.png";
                 ContentBody contentPart = new ByteArrayBody(bos.toByteArray(), filename);
                 ContentBody textPart = null;
                 try {
                     textPart = new StringBody(query);
                 } catch (UnsupportedEncodingException e) {
-                    Log.e("qa","text part of query");
+                    Log.e(type,"text part of query");
                     e.printStackTrace();
                 }
 
@@ -170,10 +182,10 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             else {
                 MicrosoftAPI msApi = new MicrosoftAPI();
 
-                if(type.equals("find")) {
-                    msApi.setEntity(query);
-                    Log.i("finding object", query);
-                }
+//                if(type.equals("find")) {
+//                    msApi.setEntity(query);
+//                    Log.i("finding object", query);
+//                }
                 try {
                     msApi.getVisionOutput(bos.toByteArray(),type);
                 } catch (JSONException e) {
@@ -245,6 +257,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         this.faceAgeButton = (ImageButton) this.findViewById(R.id.faceAgeButton);
         this.faceGenderButton = (ImageButton) this.findViewById(R.id.faceGenderButton);
         this.faceEmotionButton = (ImageButton) this.findViewById(R.id.faceEmotionButton);
+        this.currencyButton = (ImageButton) this.findViewById(R.id.currencyButton);
         mCamera = getCameraInstance();
         mCamera.setDisplayOrientation(90);
         spinner = (TextView) findViewById(R.id.progress);
@@ -310,8 +323,16 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             @Override
             public void onClick(View v) {
                 type = "caption";
-                spinner.setVisibility(View.VISIBLE);
-                capturePicture(mCamera);
+                startCapture();
+            }
+        });
+
+        currencyButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                type = "currency";
+                startCapture();
             }
         });
 
@@ -333,8 +354,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                 updateMode();
 
                 if (capturePhoto) {
-                    spinner.setVisibility(View.VISIBLE);
-                    capturePicture(mCamera);
+                    startCapture();
                 }
             }
         });
@@ -371,8 +391,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             @Override
             public void onClick(View v) {
                 type = "ocr";
-                spinner.setVisibility(View.VISIBLE);
-                capturePicture(mCamera);
+                startCapture();
             }
         });
 
@@ -389,8 +408,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             @Override
             public void onClick(View v) {
                 type = "face_count";
-                spinner.setVisibility(View.VISIBLE);
-                capturePicture(mCamera);
+                startCapture();
             }
         });
 
@@ -399,8 +417,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             @Override
             public void onClick(View v) {
                 type = "face_age";
-                spinner.setVisibility(View.VISIBLE);
-                capturePicture(mCamera);
+                startCapture();
             }
         });
 
@@ -409,8 +426,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             @Override
             public void onClick(View v) {
                 type = "face_emotion";
-                spinner.setVisibility(View.VISIBLE);
-                capturePicture(mCamera);
+                startCapture();
             }
         });
 
@@ -419,8 +435,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             @Override
             public void onClick(View v) {
                 type = "face_gender";
-                spinner.setVisibility(View.VISIBLE);
-                capturePicture(mCamera);
+                startCapture();
             }
         });
 
@@ -470,6 +485,11 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             }
         });
 
+    }
+
+    public void startCapture() {
+        spinner.setVisibility(View.VISIBLE);
+        capturePicture(mCamera);
     }
 
     public void updateMode() {
@@ -543,8 +563,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             }
             else if (e2.getAxisValue(0) - e1.getAxisValue(0) > 50) {
                 detectGesture = false;
-                spinner.setVisibility(View.VISIBLE);
-                capturePicture(mCamera);
+                startCapture();
             }
         }
         else if (DataHelper.getSharedPrefStr(ConstantValues.KEY_MODE).equals(ConstantValues.MODE_FACE)) {
@@ -722,8 +741,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                     navigate();
                 }
                 else {
-                    spinner.setVisibility(View.VISIBLE);
-                    capturePicture(mCamera);
+                    startCapture();
                 }
             }
         }
@@ -752,14 +770,12 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                     else if (luisIntent.equals("find")) {
                         type = "find";
                         objectFound = false;
-                        spinner.setVisibility(View.VISIBLE);
-                        capturePicture(mCamera);
+                        startCapture();
                         detectGesture = true;
                     }
-                    else if (luisIntent.equals("caption") || luisIntent.contains("face") || luisIntent.contains("qa") || luisIntent.contains("ocr")) {
+                    else { //caption, face, qa, ocr, currency
                         type = luisIntent;
-                        spinner.setVisibility(View.VISIBLE);
-                        capturePicture(mCamera);
+                        startCapture();
                     }
                 }
             }

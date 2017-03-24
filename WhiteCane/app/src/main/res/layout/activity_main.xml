@@ -80,6 +80,14 @@
             android:src="@mipmap/ic_people" />
 
         <ImageButton
+            android:id="@+id/currencyButton"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:contentDescription="Recognize Currency"
+            android:elevation="5dp"
+            android:src="@mipmap/ic_currency" />
+
+        <ImageButton
             android:id="@+id/navigationButton"
             android:layout_width="50dp"
             android:layout_height="50dp"
