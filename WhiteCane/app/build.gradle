@@ -18,7 +18,7 @@ android {
         versionName "0.3.6"
         multiDexEnabled true
         signingConfig signingConfigs.config
-        versionCode 3
+        versionCode 5
     }
     buildTypes {
         release {
@@ -50,7 +50,6 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:25.0.1'
-    compile 'com.he5ed.lib:volley:android-cts-5.1_r4'
     compile('org.apache.httpcomponents:httpmime:4.3.6') {
         exclude module: 'httpclient'
     }

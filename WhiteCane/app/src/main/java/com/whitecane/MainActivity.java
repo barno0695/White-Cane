@@ -1,12 +1,9 @@
 package com.whitecane;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 
@@ -15,12 +12,9 @@ import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,11 +24,10 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
@@ -86,6 +79,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     ImageButton currencyButton;
     TextView modeTextView;
     String response;
+    ToggleButton autoFocusButton;
 
     /** A safe way to get an instance of the Camera object. */
     public static Camera getCameraInstance(){
@@ -204,30 +198,10 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         }
     };
 
-    public void checkPermisions() {
-        if ( ContextCompat.checkSelfPermission(this,
-                Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.CAMERA},
-                    1);
-
-        }
-
-        if ( ContextCompat.checkSelfPermission(this,
-                Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    1);
-
-        }
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        checkPermisions();
+
         try {
             DataHelper.saveSharedPrefStr(ConstantValues.KEY_MODE, ConstantValues.MODE_MAIN);
             updateMode();
@@ -259,6 +233,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         detectGesture = false;
         mDetector = new GestureDetectorCompat(this,this);
         modeTextView = (TextView) findViewById(R.id.modeText);
+        autoFocusButton = (ToggleButton) findViewById(R.id.autoFocusButton);
 
         DataHelper.setSharedPref(getSharedPreferences(ConstantValues.KEY_SHARED_PREF, Context.MODE_PRIVATE));
         DataHelper.saveSharedPrefStr(ConstantValues.KEY_MODE, ConstantValues.MODE_MAIN);
@@ -424,12 +399,10 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
 
                     @Override
                     public void onError(String utteranceId, int error) {
-//                        System.out.println(error);
                     }
 
                     @Override
                     public void onError(String utteranceId) {
-//                        System.out.println("error");
                     }
 
                     @Override
@@ -440,7 +413,6 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                 if(status != TextToSpeech.ERROR) {
                     textToSpeech.setLanguage(Locale.UK);
                 }
-                speak();
             }
 
 
@@ -449,12 +421,17 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     }
 
     public void capturePicture(final Camera mCamera) {
-        mCamera.autoFocus(new Camera.AutoFocusCallback() {
-            @Override
-            public void onAutoFocus(boolean b, Camera camera) {
+        if (autoFocusButton.isChecked()) {
+            mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                @Override
+                public void onAutoFocus(boolean b, Camera camera) {
                     mCamera.takePicture(null, null, pictureCallback);
-            }
-        });
+                }
+            });
+        }
+        else {
+            mCamera.takePicture(null, null, pictureCallback);
+        }
 
     }
 

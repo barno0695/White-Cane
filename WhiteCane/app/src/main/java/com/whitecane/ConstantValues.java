@@ -14,4 +14,6 @@ public class ConstantValues {
 
     public static final int REQ_CODE_SPEECH_INPUT = 1890;
     public static final int REQ_CODE_SPEECH_INPUT_AFTER_BUTTON = 1900;
+
+    public static final int PERMISSION_CODE_CAMERA = 1267;
 }
