@@ -10,7 +10,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.hardware.Camera;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.net.Uri;
+import android.os.Vibrator;
 import android.provider.MediaStore;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
@@ -46,6 +49,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
 
 public class MainActivity extends Activity implements GestureDetector.OnGestureListener,
@@ -81,6 +85,12 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     String response;
     ToggleButton autoFocusButton;
     ImageButton backgroundButton;
+    Boolean paused;
+
+    //ShakeToSpeak
+    private SensorManager mSensorManager;
+    private Sensor mAccelerometer;
+    private ShakeDetector mShakeDetector;
 
     /** A safe way to get an instance of the Camera object. */
     public static Camera getCameraInstance(){
@@ -200,6 +210,19 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     };
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        textToSpeech.stop();
+        paused = true;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        paused = false;
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -236,6 +259,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         modeTextView = (TextView) findViewById(R.id.modeText);
         autoFocusButton = (ToggleButton) findViewById(R.id.autoFocusButton);
         backgroundButton = (ImageButton) findViewById(R.id.backgroundButton);
+        paused = false;
 
         DataHelper.setSharedPref(getSharedPreferences(ConstantValues.KEY_SHARED_PREF, Context.MODE_PRIVATE));
         DataHelper.saveSharedPrefStr(ConstantValues.KEY_MODE, ConstantValues.MODE_MAIN);
@@ -247,6 +271,29 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         mPreview = new CameraPreview(this, mCamera);
         FrameLayout preview = (FrameLayout) findViewById(R.id.cameraPreview);
         preview.addView(mPreview);
+
+        // ShakeToSpeak
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mShakeDetector = new ShakeDetector(new ShakeDetector.OnShakeListener() {
+            @Override
+            public void onShake() {
+//                Toast.makeText(MainActivity.this, "Shake Detected!", Toast.LENGTH_SHORT).show();
+                // Get instance of Vibrator from current Context
+                if (!paused) {
+                    Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                    // Vibrate for 200 milliseconds
+                    if (textToSpeech.isSpeaking()) {
+                        textToSpeech.stop();
+                    } else {
+                        promptSpeechInput(true);
+                    }
+                    v.vibrate(200);
+                }
+            }
+        });
+        mSensorManager.registerListener(mShakeDetector, mAccelerometer, 200000);
+
 
         backgroundButton.setOnClickListener(new View.OnClickListener() {
 

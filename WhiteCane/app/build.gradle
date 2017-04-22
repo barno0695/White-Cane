@@ -15,10 +15,10 @@ android {
         applicationId "com.whitecane"
         minSdkVersion 15
         targetSdkVersion 25
-        versionName '0.3.6.1'
+        versionName '0.3.7'
         multiDexEnabled true
         signingConfig signingConfigs.config
-        versionCode 7
+        versionCode 8
     }
     buildTypes {
         release {
