@@ -80,6 +80,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     TextView modeTextView;
     String response;
     ToggleButton autoFocusButton;
+    ImageButton backgroundButton;
 
     /** A safe way to get an instance of the Camera object. */
     public static Camera getCameraInstance(){
@@ -234,6 +235,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         mDetector = new GestureDetectorCompat(this,this);
         modeTextView = (TextView) findViewById(R.id.modeText);
         autoFocusButton = (ToggleButton) findViewById(R.id.autoFocusButton);
+        backgroundButton = (ImageButton) findViewById(R.id.backgroundButton);
 
         DataHelper.setSharedPref(getSharedPreferences(ConstantValues.KEY_SHARED_PREF, Context.MODE_PRIVATE));
         DataHelper.saveSharedPrefStr(ConstantValues.KEY_MODE, ConstantValues.MODE_MAIN);
@@ -245,6 +247,14 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         mPreview = new CameraPreview(this, mCamera);
         FrameLayout preview = (FrameLayout) findViewById(R.id.cameraPreview);
         preview.addView(mPreview);
+
+        backgroundButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                promptSpeechInput(true);
+            }
+        });
 
         settingsButton.setOnClickListener(new View.OnClickListener() {
 
@@ -422,12 +432,17 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
 
     public void capturePicture(final Camera mCamera) {
         if (autoFocusButton.isChecked()) {
-            mCamera.autoFocus(new Camera.AutoFocusCallback() {
-                @Override
-                public void onAutoFocus(boolean b, Camera camera) {
-                    mCamera.takePicture(null, null, pictureCallback);
-                }
-            });
+                mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                    @Override
+                    public void onAutoFocus(boolean b, Camera camera) {
+                        try {
+                            mCamera.takePicture(null, null, pictureCallback);
+                        }
+                        catch (Exception e) {
+                            Log.e("on capture", "Auto focus error");
+                        }
+                    }
+                });
         }
         else {
             mCamera.takePicture(null, null, pictureCallback);

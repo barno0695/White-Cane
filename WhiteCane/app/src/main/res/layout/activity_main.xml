@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -21,7 +22,7 @@
         android:src="@android:drawable/ic_menu_preferences"
         android:translationZ="10dp" />
 
-    <EditText
+    <TextView
         android:id="@+id/modeText"
         android:layout_width="match_parent"
         android:layout_height="50dp"
@@ -35,7 +36,8 @@
         android:text="Main mode"
         android:textColor="#FFFFFF"
         android:translationZ="5dp"
-        android:visibility="visible" />
+        android:visibility="visible"
+        android:clickable="false"/>
 
     <ImageButton
         android:layout_width="50dp"
@@ -184,6 +186,13 @@
 
         <include android:id="@+id/settingsOverlay" layout="@layout/layout_settings" />
     </RelativeLayout>
+
+    <ImageButton
+        android:id="@+id/backgroundButton"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="Tap to Speak"
+        android:background="@android:color/transparent" />
 
     <LinearLayout
         android:id="@+id/layout"
