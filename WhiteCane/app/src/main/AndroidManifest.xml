@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.whitecane"
-    android:versionName="0.3.6">
+    package="com.hypersense.whitecane"
+    android:versionName="0.3.7.1">
 
     <uses-feature android:name="android.hardware.camera"
         android:required="true" />
@@ -17,7 +17,7 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 
-        <activity android:name=".SplashActivity"
+        <activity android:name="com.hypersense.whitecane.SplashActivity"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,7 +25,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".MainActivity"
+        <activity android:name="com.hypersense.whitecane.MainActivity"
             android:screenOrientation="portrait">
         </activity>
 

@@ -1,4 +1,4 @@
-package com.whitecane;
+package com.hypersense.whitecane;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -37,7 +37,9 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.entity.mime.content.ContentBody;
 import org.apache.http.entity.mime.content.StringBody;
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -49,7 +51,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Locale;
 
 public class MainActivity extends Activity implements GestureDetector.OnGestureListener,
@@ -81,6 +82,12 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     ImageButton faceGenderButton;
     ImageButton faceEmotionButton;
     ImageButton currencyButton;
+    ImageButton ocrppButton;
+    ImageButton ocrppTitleButton;
+    ImageButton ocrppAuthorButton;
+    ImageButton ocrppEmailsButton;
+    ImageButton ocrppAffilButton;
+    ImageButton ocrppAbstractButton;
     TextView modeTextView;
     String response;
     ToggleButton autoFocusButton;
@@ -128,7 +135,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
 
             int photoHeight = 682;
             int photoWidth = 512;
-            if (type.equals("ocr") || type.contains("face")) {
+            if (type.equals("ocr") || type.contains("face") || type.equals("ocrpp")) {
                 photoHeight = 1250;
                 photoWidth = 947;
             }
@@ -140,7 +147,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             photo.compress(Bitmap.CompressFormat.JPEG, 100, bos);
 
-            if(type.equals("qa") || type.equals("find") || type.equals("currency")) {  // Request to server
+            if(type.equals("qa") || type.equals("find") || type.equals("currency") || type.equals("ocrpp")) {  // Request to server
                 String filename = "filename.png";
                 ContentBody contentPart = new ByteArrayBody(bos.toByteArray(), filename);
                 ContentBody textPart = null;
@@ -175,6 +182,13 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                 thread.start();
                 try {
                     thread.join();
+                    if (!response.equals("There was a network error")) {
+                        try {
+                            response = new JSONObject(response).getString("output");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     captionText.setText(response);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -199,12 +213,19 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             mCamera.stopPreview();
             spinner.setVisibility(View.GONE);
             mCamera.startPreview();
+
+            if (type == "ocrpp") {
+                DataHelper.saveSharedPrefStr(ConstantValues.KEY_OCRPP_JSON, response);
+            }
+
             speak();
 
             if (type == "find" && objectFound == false) {
                 textToSpeech.speak("Swipe right to continue searching and left to stop", TextToSpeech.QUEUE_ADD, null);
                 detectGesture = true;
             }
+
+
 
         }
     };
@@ -248,6 +269,12 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         this.faceGenderButton = (ImageButton) this.findViewById(R.id.faceGenderButton);
         this.faceEmotionButton = (ImageButton) this.findViewById(R.id.faceEmotionButton);
         this.currencyButton = (ImageButton) this.findViewById(R.id.currencyButton);
+        this.ocrppButton = (ImageButton) this.findViewById(R.id.ocrppButton);
+        this.ocrppTitleButton = (ImageButton) this.findViewById(R.id.ocrppTitleButton);
+        this.ocrppAuthorButton = (ImageButton) this.findViewById(R.id.ocrppAuthorButton);
+        this.ocrppEmailsButton = (ImageButton) this.findViewById(R.id.ocrppEmailsButton);
+        this.ocrppAffilButton = (ImageButton) this.findViewById(R.id.ocrppAffilButton);
+        this.ocrppAbstractButton = (ImageButton) this.findViewById(R.id.ocrppAbstractButton);
         mCamera = getCameraInstance();
         mCamera.setDisplayOrientation(90);
         spinner = (TextView) findViewById(R.id.progress);
@@ -278,7 +305,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
         mShakeDetector = new ShakeDetector(new ShakeDetector.OnShakeListener() {
             @Override
             public void onShake() {
-//                Toast.makeText(MainActivity.this, "Shake Detected!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Shake Detected!", Toast.LENGTH_SHORT).show();
                 // Get instance of Vibrator from current Context
                 if (!paused) {
                     Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
@@ -299,7 +326,126 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
 
             @Override
             public void onClick(View v) {
-                promptSpeechInput(true);
+//                promptSpeechInput(true);
+            }
+        });
+
+        ocrppTitleButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                String jsonString = DataHelper.getSharedPrefStr(ConstantValues.KEY_OCRPP_JSON);
+                try {
+                    JSONObject json = new JSONObject(jsonString);
+                    json = new JSONObject(json.getString("output"));
+                    String title = json.getString("title");
+                    captionText.setText("The title is " + title);
+                    speak();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        ocrppAuthorButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                String jsonString = DataHelper.getSharedPrefStr(ConstantValues.KEY_OCRPP_JSON);
+                try {
+                    JSONObject json = new JSONObject(jsonString);
+                    json = new JSONObject(json.getString("output"));
+                    JSONArray authors = json.getJSONArray("authors");
+                    String answer = "The authors are ";
+                    for(int i=0; i<authors.length(); i++) {
+                        answer = answer + authors.get(i) +", ";
+                    }
+                    captionText.setText(answer);
+                    speak();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        ocrppEmailsButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                String jsonString = DataHelper.getSharedPrefStr(ConstantValues.KEY_OCRPP_JSON);
+                try {
+                    JSONObject json = new JSONObject(jsonString);
+                    json = new JSONObject(json.getString("output"));
+                    JSONArray emails = json.getJSONArray("emails");
+                    String answer = "The emails are ";
+                    for(int i=0; i<emails.length(); i++) {
+                        answer = answer + emails.get(i) + ", ";
+                    }
+                    captionText.setText(answer);
+                    speak();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        ocrppAffilButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                String jsonString = DataHelper.getSharedPrefStr(ConstantValues.KEY_OCRPP_JSON);
+                try {
+                    System.out.println(jsonString);
+                    JSONObject json = new JSONObject(jsonString);
+                    json = new JSONObject(json.getString("output"));
+                    JSONArray affils = json.getJSONArray("affils");
+                    String answer = "The affiliations are ";
+                    for(int i=0; i<affils.length(); i++) {
+                        answer = answer + affils.get(i) + ", ";
+                    }
+                    captionText.setText(answer);
+                    speak();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        ocrppAbstractButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                String jsonString = DataHelper.getSharedPrefStr(ConstantValues.KEY_OCRPP_JSON);
+                try {
+                    JSONObject json = new JSONObject(jsonString);
+                    json = new JSONObject(json.getString("output"));
+                    JSONArray sections = json.getJSONArray("sections");
+                    String answer = "The abstract is ";
+                    for(int i=0; i<sections.length(); i++) {
+                        if (sections.get(i).toString().contains("Heading: Abstract")) {
+                            answer = answer + sections.get(i).toString().split("Chunks: ")[1] + ", ";
+                        }
+                    }
+                    captionText.setText(answer);
+                    speak();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        ocrppButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                type = "ocrpp";
+
+                DataHelper.saveSharedPrefStr(ConstantValues.KEY_MODE, ConstantValues.MODE_OCRPP);
+                Log.i("barno", "ayay");
+
+                updateMode();
+
+                startCapture();
             }
         });
 
@@ -505,6 +651,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     public void updateMode() {
         int mainVisibility = View.VISIBLE;
         int faceVisibility = View.GONE;
+        int ocrppVisibility = View.GONE;
         String modeText = "Main mode";
         int modeButton = R.mipmap.ic_people;
 
@@ -516,24 +663,40 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
             detectGesture = true;
         }
 
+        if (DataHelper.getSharedPrefStr(ConstantValues.KEY_MODE).equals(ConstantValues.MODE_OCRPP)) {
+            mainVisibility = View.GONE;
+            ocrppVisibility = View.VISIBLE;
+            modeText = "Research mode";
+            modeButton = R.mipmap.ic_main;
+            DataHelper.saveSharedPrefStr(ConstantValues.KEY_OCRPP_JSON, "{ Try again }");
+        }
+
+
         captionButton.setVisibility(mainVisibility);
         qaButton.setVisibility(mainVisibility);
         navigationButton.setVisibility(mainVisibility);
         findButton.setVisibility(mainVisibility);
         ocrButton.setVisibility(mainVisibility);
         currencyButton.setVisibility(mainVisibility);
+        ocrppButton.setVisibility(mainVisibility);
 
         faceCountButton.setVisibility(faceVisibility);
         faceAgeButton.setVisibility(faceVisibility);
         faceGenderButton.setVisibility(faceVisibility);
         faceEmotionButton.setVisibility(faceVisibility);
 
+        ocrppAbstractButton.setVisibility(ocrppVisibility);
+        ocrppTitleButton.setVisibility(ocrppVisibility);
+        ocrppAuthorButton.setVisibility(ocrppVisibility);
+        ocrppEmailsButton.setVisibility(ocrppVisibility);
+        ocrppAffilButton.setVisibility(ocrppVisibility);
+
         faceModeButton.setImageResource(modeButton);
 
         modeTextView.setText(modeText);
 
         textToSpeech.speak(modeText, TextToSpeech.QUEUE_ADD, null);
-        if (modeText.equals("People mode")) {
+        if (!modeText.equals("Main mode")) {
             textToSpeech.speak("Swipe right to exit to main mode", TextToSpeech.QUEUE_ADD, null);
         }
     }
@@ -567,7 +730,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
                             float distanceY) {
-//        Log.d("touch event", "onScroll: " + e1.toString()+e2.toString());
+        Log.d("touch event", "onScroll: " + e1.toString()+e2.toString());
         if (type == "find" && detectGesture == true) {
             if (e1.getAxisValue(0) - e2.getAxisValue(0) > 50) {
                 type = "";
@@ -577,7 +740,7 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                 startCapture();
             }
         }
-        else if (DataHelper.getSharedPrefStr(ConstantValues.KEY_MODE).equals(ConstantValues.MODE_FACE)) {
+        else if (DataHelper.getSharedPrefStr(ConstantValues.KEY_MODE).equals(ConstantValues.MODE_FACE) || DataHelper.getSharedPrefStr(ConstantValues.KEY_MODE).equals(ConstantValues.MODE_OCRPP)) {
             if (e2.getAxisValue(0) - e1.getAxisValue(0) > 50) {
                 DataHelper.saveSharedPrefStr(ConstantValues.KEY_MODE, ConstantValues.MODE_MAIN);
                 updateMode();
@@ -778,7 +941,80 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                     Log.i("Luis Intent", luisIntent);
                     Toast.makeText(getApplicationContext(), luisIntent,Toast.LENGTH_SHORT).show();
 
-                    if (luisIntent.equals("help")) {
+                    if (luisIntent.equals("title")) {
+                        String jsonString = DataHelper.getSharedPrefStr(ConstantValues.KEY_OCRPP_JSON);
+                        try {
+                            JSONObject json = new JSONObject(jsonString);
+                            String title = json.getString("title");
+                            captionText.setText("The title is " + title);
+                            speak();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    else if (luisIntent.equals("name")) {
+                        String jsonString = DataHelper.getSharedPrefStr(ConstantValues.KEY_OCRPP_JSON);
+                        try {
+                            JSONObject json = new JSONObject(jsonString);
+                            JSONArray authors = json.getJSONArray("authors");
+                            String answer = "The authors are ";
+                            for(int i=0; i<authors.length(); i++) {
+                                answer = answer + authors.get(i) +", ";
+                            }
+                            captionText.setText(answer);
+                            speak();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    else if (luisIntent.equals("email")) {
+                        String jsonString = DataHelper.getSharedPrefStr(ConstantValues.KEY_OCRPP_JSON);
+                        try {
+                            JSONObject json = new JSONObject(jsonString);
+                            JSONArray emails = json.getJSONArray("emails");
+                            String answer = "The emails are ";
+                            for(int i=0; i<emails.length(); i++) {
+                                answer = answer + emails.get(i) + ", ";
+                            }
+                            captionText.setText(answer);
+                            speak();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    else if (luisIntent.equals("affiliation")) {
+                        String jsonString = DataHelper.getSharedPrefStr(ConstantValues.KEY_OCRPP_JSON);
+                        try {
+                            JSONObject json = new JSONObject(jsonString);
+                            JSONArray affils = json.getJSONArray("affils");
+                            String answer = "The affiliations are ";
+                            for(int i=0; i<affils.length(); i++) {
+                                answer = answer + affils.get(i) + ", ";
+                            }
+                            captionText.setText(answer);
+                            speak();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    else if (luisIntent.equals("abstract")) {
+                        String jsonString = DataHelper.getSharedPrefStr(ConstantValues.KEY_OCRPP_JSON);
+                        try {
+                            JSONObject json = new JSONObject(jsonString);
+                            JSONArray sections = json.getJSONArray("sections");
+                            String answer = "The abstract is ";
+                            for(int i=0; i<sections.length(); i++) {
+                                if (sections.get(i).toString().contains("Heading: Abstract")) {
+                                    answer = answer + sections.get(i).toString().split("Chunks: ")[1] + ", ";
+                                }
+                            }
+                            captionText.setText(answer);
+                            speak();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    else if (luisIntent.equals("help")) {
                         textToSpeech.speak(getString(R.string.help_text), TextToSpeech.QUEUE_FLUSH, null);
                     }
                     else if (luisIntent.equals("navigation")) {
@@ -790,11 +1026,17 @@ public class MainActivity extends Activity implements GestureDetector.OnGestureL
                         startCapture();
                         detectGesture = true;
                     }
-                    else { //caption, face, qa, ocr, currency
+                    else { //caption, face, qa, ocr, currency, ocr++
                         type = luisIntent;
                         if(type.equals("face")) {
                             if (DataHelper.getSharedPrefStr(ConstantValues.KEY_MODE).equals(ConstantValues.MODE_MAIN)) {
                                 DataHelper.saveSharedPrefStr(ConstantValues.KEY_MODE, ConstantValues.MODE_FACE);
+                                updateMode();
+                            }
+                        }
+                        else if (type.equals("ocrpp")) {
+                            if (DataHelper.getSharedPrefStr(ConstantValues.KEY_MODE).equals(ConstantValues.MODE_MAIN)) {
+                                DataHelper.saveSharedPrefStr(ConstantValues.KEY_MODE, ConstantValues.MODE_OCRPP);
                                 updateMode();
                             }
                         }

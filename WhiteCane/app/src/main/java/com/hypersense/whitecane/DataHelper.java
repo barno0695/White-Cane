@@ -1,6 +1,5 @@
-package com.whitecane;
+package com.hypersense.whitecane;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 
 /**

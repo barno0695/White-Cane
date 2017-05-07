@@ -1,4 +1,4 @@
-package com.whitecane;
+package com.hypersense.whitecane;
 
 import android.Manifest;
 import android.app.Activity;
@@ -10,7 +10,6 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 
 import java.util.Locale;
 

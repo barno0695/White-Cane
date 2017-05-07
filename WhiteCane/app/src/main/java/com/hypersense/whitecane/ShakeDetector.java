@@ -1,4 +1,4 @@
-package com.whitecane;
+package com.hypersense.whitecane;
 
 /**
  * Created by divyansh on 19/4/17.

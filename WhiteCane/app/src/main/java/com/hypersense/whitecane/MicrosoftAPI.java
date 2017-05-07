@@ -1,6 +1,5 @@
-package com.whitecane;
+package com.hypersense.whitecane;
 
-import android.support.v4.content.res.TypedArrayUtils;
 import android.util.Log;
 
 import org.apache.http.HttpEntity;
@@ -68,6 +67,9 @@ public class MicrosoftAPI {
 
         if (DataHelper.getSharedPrefStr(ConstantValues.KEY_MODE).equals(ConstantValues.MODE_FACE)) {
             appMode = ConstantValues.APP_LUIS_FACE;
+        }
+        else if (DataHelper.getSharedPrefStr(ConstantValues.KEY_MODE).equals(ConstantValues.MODE_OCRPP)) {
+            appMode = ConstantValues.APP_LUIS_OCRPP;
         }
 
         final String url = "https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/" + appMode + "?subscription-key=" + MicrosoftAPIKeys.getLuisKey() + "&q=" + question;

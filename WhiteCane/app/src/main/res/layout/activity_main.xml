@@ -8,7 +8,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.whitecane.MainActivity"
+    tools:context="com.hypersense.whitecane.MainActivity"
     android:orientation="vertical"
     android:gravity="center">
 
@@ -80,15 +80,6 @@
             android:contentDescription="Recognize Currency"
             android:elevation="5dp"
             android:src="@mipmap/ic_currency" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/buttonRow2"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:layout_alignParentBottom="true"
-        android:elevation="5dp"
-        android:layout_centerHorizontal="true">
 
         <ImageButton
             android:id="@+id/faceModeButton"
@@ -100,12 +91,42 @@
             android:src="@mipmap/ic_people" />
 
         <ImageButton
-            android:id="@+id/navigationButton"
+            android:id="@+id/ocrppTitleButton"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:contentDescription="Navigation"
+            android:contentDescription="Title"
             android:elevation="5dp"
-            android:src="@mipmap/ic_nav" />
+            android:src="@mipmap/ic_title"
+            android:visibility="gone"/>
+
+        <ImageButton
+            android:id="@+id/ocrppAuthorButton"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:contentDescription="Authors"
+            android:elevation="5dp"
+            android:src="@mipmap/ic_author"
+            android:visibility="gone"/>
+
+        <ImageButton
+            android:id="@+id/faceCountButton"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:contentDescription="Count"
+            android:elevation="5dp"
+            android:src="@mipmap/ic_count"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/buttonRow2"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:elevation="5dp"
+        android:layout_centerHorizontal="true">
 
         <ImageButton
             android:id="@+id/ocrButton"
@@ -116,21 +137,29 @@
             android:src="@mipmap/ic_ocr" />
 
         <ImageButton
+            android:id="@+id/ocrppButton"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:contentDescription="O C R plus plus"
+            android:elevation="5dp"
+            android:src="@mipmap/ic_ocrpp" />
+
+        <ImageButton
+            android:id="@+id/navigationButton"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:contentDescription="Navigation"
+            android:elevation="5dp"
+            android:src="@mipmap/ic_nav" />
+
+        <ImageButton
             android:id="@+id/qaButton"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:contentDescription="Question Answering"
             android:elevation="5dp"
             android:src="@mipmap/ic_qa" />
-
-        <ImageButton
-            android:id="@+id/faceCountButton"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:contentDescription="Count"
-            android:elevation="5dp"
-            android:src="@mipmap/ic_count"
-            android:visibility="gone"/>
 
         <ImageButton
             android:id="@+id/faceAgeButton"
@@ -157,6 +186,33 @@
             android:contentDescription="Emotion"
             android:elevation="5dp"
             android:src="@mipmap/ic_emotion"
+            android:visibility="gone"/>
+
+        <ImageButton
+            android:id="@+id/ocrppEmailsButton"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:contentDescription="Emails"
+            android:elevation="5dp"
+            android:src="@mipmap/ic_email"
+            android:visibility="gone"/>
+
+        <ImageButton
+            android:id="@+id/ocrppAffilButton"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:contentDescription="Affiliation"
+            android:elevation="5dp"
+            android:src="@mipmap/ic_affil"
+            android:visibility="gone"/>
+
+        <ImageButton
+            android:id="@+id/ocrppAbstractButton"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:contentDescription="Abstract"
+            android:elevation="5dp"
+            android:src="@mipmap/ic_abstract"
             android:visibility="gone"/>
 
     </LinearLayout>
@@ -191,8 +247,9 @@
         android:id="@+id/backgroundButton"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@android:color/transparent"
         android:contentDescription="Tap to Speak"
-        android:background="@android:color/transparent" />
+        android:visibility="gone" />
 
     <LinearLayout
         android:id="@+id/layout"

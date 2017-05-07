@@ -2,7 +2,10 @@
     <string name="app_name"> WhiteCane </string>
     <string name="welcome_note"> Welcome to WhiteCane. Shake your phone to speak. </string>
     <string name="speak_now"> Shake </string>
-    <string name="help_text"> Welcome to White Cane. This application supports two modes : Main mode, and People mode. Main mode supports Scene description, Currency Recognition, Navigation, Object localisation, OCR, and Visual Question Answering. People mode supports people count, emotion, gender, and age. </string>
-    <string name="server_ip"> xxxx </string>
+    <string name="help_text"> Welcome to White Cane. Give your phone a sturdy shake to wake me up so that I can help you with your query. </string>
+        <!--This application supports two modes : Main mode, and People mode. Main mode supports Scene description, Currency Recognition, Navigation, Object localisation, OCR, and Visual Question Answering. People mode supports people count, emotion, gender, and age. -->
+    <string name="scene_description_help"> Here I give you a general idea about what I can see. </string>
+    <!--<string name=""-->
+    <string name="server_ip"> 13.71.122.53 </string>
 
 </resources>

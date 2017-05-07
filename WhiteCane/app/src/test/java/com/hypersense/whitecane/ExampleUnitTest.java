@@ -1,4 +1,4 @@
-package com.whitecane;
+package com.hypersense.whitecane;
 
 import org.junit.Test;
 

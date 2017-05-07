@@ -1,4 +1,4 @@
-package com.whitecane;
+package com.hypersense.whitecane;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
